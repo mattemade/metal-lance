@@ -1,19 +1,23 @@
 package io.itch.mattekudasai.metallance
 
-import io.itch.mattekudasai.metallance.screen.FirstScreen
+import com.badlogic.gdx.Application
+import com.badlogic.gdx.Gdx
+import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
 
 class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
     override fun create() {
+        // TODO: switch to LOG_NONE
+        Gdx.app.logLevel = Application.LOG_DEBUG
         // TODO: add start screen
         // TODO: add intro screen
         showGameScreen()
     }
 
     private fun showGameScreen() {
-        switchToScreen(FirstScreen())
+        switchToScreen(GameScreen())
     }
 
     private fun switchToScreen(screen: KtxScreen) {
