@@ -1,35 +1,36 @@
 package io.itch.mattekudasai.metallance
 
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import io.itch.mattekudasai.metallance.screen.FirstScreen
+import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
-import ktx.app.clearScreen
-import ktx.assets.disposeSafely
-import ktx.assets.toInternalFile
-import ktx.graphics.use
 
-class MetalLanceGame : KtxGame<KtxScreen>() {
+class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
     override fun create() {
-        addScreen(FirstScreen())
-        setScreen<FirstScreen>()
+        // TODO: add start screen
+        // TODO: add intro screen
+        showGameScreen()
+    }
+
+    private fun showGameScreen() {
+        switchToScreen(FirstScreen())
+    }
+
+    private fun switchToScreen(screen: KtxScreen) {
+        removeScreen(shownScreen.javaClass)
+        addScreen(
+            PixelPerfectScreen(
+                screen = screen,
+                virtualWidth = VIRTUAL_WIDTH,
+                virtualHeight = VIRTUAL_HEIGHT
+            )
+        )
+        setScreen<PixelPerfectScreen>()
+    }
+
+    companion object {
+        const val VIRTUAL_WIDTH = 256f
+        const val VIRTUAL_HEIGHT = 240f
     }
 }
 
-class FirstScreen : KtxScreen {
-    private val image = Texture("logo.png".toInternalFile(), true).apply { setFilter(Linear, Linear) }
-    private val batch = SpriteBatch()
-
-    override fun render(delta: Float) {
-        clearScreen(red = 0.7f, green = 0.7f, blue = 0.7f)
-        batch.use {
-            it.draw(image, 100f, 160f)
-        }
-    }
-
-    override fun dispose() {
-        image.disposeSafely()
-        batch.disposeSafely()
-    }
-}
