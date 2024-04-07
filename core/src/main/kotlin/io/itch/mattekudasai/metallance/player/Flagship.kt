@@ -10,7 +10,7 @@ import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import ktx.app.KtxInputAdapter
 
-class Flagship : SimpleSprite("ship.png"), KtxInputAdapter {
+class Flagship(private val onShot: (x: Float, y: Float) -> Unit) : SimpleSprite("ship.png"), KtxInputAdapter {
 
     private val state = State()
 
@@ -42,30 +42,7 @@ class Flagship : SimpleSprite("ship.png"), KtxInputAdapter {
         return true
     }
 
-    private val horizontalSpeedMap = mapOf(
-        false to mapOf(
-            // not moving forward
-            false to 0f, // not moving backward
-            true to -HORIZONTAL_SPEED, // moving backward
-        ),
-        true to mapOf(
-            // moving forward
-            false to HORIZONTAL_SPEED, // not moving backward
-            true to 0f, // moving backward
-        )
-    )
-    private val verticalSpeedMap = mapOf(
-        false to mapOf(
-            // not moving up
-            false to 0f, // not moving down
-            true to -VERTICAL_SPEED, // moving backward
-        ),
-        true to mapOf(
-            // moving forward
-            false to VERTICAL_SPEED, // not moving backward
-            true to 0f, // moving backward
-        )
-    )
+
     private val movingTo = Vector2()
 
     fun update(delta: Float) {
@@ -81,7 +58,13 @@ class Flagship : SimpleSprite("ship.png"), KtxInputAdapter {
         }
         state.x += movingTo.x
         state.y += movingTo.y
-        setPosition(state.x.toInt().toFloat(), state.y.toInt().toFloat())
+        setPosition((state.x - width/2f).toInt().toFloat(), (state.y - height/2f).toInt().toFloat())
+
+        if (state.timeFromLastShot > 0.5f && state.shooting) {
+            state.timeFromLastShot = 0f
+            onShot(state.x, state.y)
+        }
+        state.timeFromLastShot += delta
     }
 
     companion object {
@@ -90,5 +73,31 @@ class Flagship : SimpleSprite("ship.png"), KtxInputAdapter {
         const val VERTICAL_SPEED = SPEED_LIMIT * 0.66f
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)
         const val SLOWING_FACTOR = 0.5f
+        const val SHOOTING_RATE = 0.5f
+
+        private val horizontalSpeedMap = mapOf(
+            false to mapOf(
+                // not moving forward
+                false to 0f, // not moving backward
+                true to -HORIZONTAL_SPEED, // moving backward
+            ),
+            true to mapOf(
+                // moving forward
+                false to HORIZONTAL_SPEED, // not moving backward
+                true to 0f, // moving backward
+            )
+        )
+        private val verticalSpeedMap = mapOf(
+            false to mapOf(
+                // not moving up
+                false to 0f, // not moving down
+                true to -VERTICAL_SPEED, // moving backward
+            ),
+            true to mapOf(
+                // moving forward
+                false to VERTICAL_SPEED, // not moving backward
+                true to 0f, // moving backward
+            )
+        )
     }
 }

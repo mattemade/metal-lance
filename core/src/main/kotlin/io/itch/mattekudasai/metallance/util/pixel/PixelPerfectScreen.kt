@@ -48,7 +48,7 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
         }
         origViewport.apply(true)
         origSpriteBatch.use(origViewport.camera) {
-            Gdx.gl.glClearColor(0f, 0.15f, 0.2f, 1f);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
             it.draw(frameBufferRegion, 0f, 0f, virtualWidth, virtualHeight)
         }
