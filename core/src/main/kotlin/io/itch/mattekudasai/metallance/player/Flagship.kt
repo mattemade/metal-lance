@@ -10,7 +10,6 @@ import io.itch.mattekudasai.metallance.player.Controls.isSlow
 import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import ktx.app.KtxInputAdapter
-import kotlin.math.exp
 
 // TODO: think about dynamic world width/height
 class Flagship(
@@ -23,10 +22,13 @@ class Flagship(
 
     private val state = State(40f, worldHeight / 2f)
     val internalPosition: Vector2 get() = state.position
+    val rearPosition = Vector2()
+    val frontPosition = Vector2()
     private val normalTexture = texture
 
     private val halfWidth = width / 2f
     private val halfHeight = height / 2f
+    private var shootingRate = SHOOTING_RATE
     var isAlive = true
       private set
 
@@ -103,13 +105,20 @@ class Flagship(
             (state.position.y - halfHeight).toInt().toFloat()
         )
 
-        if (state.timeFromLastShot > SHOOTING_RATE && state.shooting) {
+        if (state.timeFromLastShot > shootingRate && state.shooting) {
             state.timeFromLastShot = 0f
             shot()
         }
         state.timeFromLastShot += delta
+        rearPosition.set(state.position).sub(3f, 0f)
+        frontPosition.set(state.position).add(3f, 0f)
     }
 
+    fun powerUp() {
+        shootingRate /= 2f
+    }
+
+    // TODO: maybe reuse is for game over?
     fun explode() {
         isAlive = false
         texture = explosionTexture
@@ -123,7 +132,8 @@ class Flagship(
         texture = normalTexture
         setBounds(0f, 0f, normalTexture.width.toFloat(), normalTexture.height.toFloat())
         timeToStartOver = 2f
-        state.position.set(40f, worldHeight / 2f)
+        //state.position.set(40f, worldHeight / 2f)
+        shootingRate = SHOOTING_RATE
     }
 
     companion object {
@@ -132,7 +142,7 @@ class Flagship(
         const val VERTICAL_SPEED = SPEED_LIMIT * 0.66f
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)
         const val SLOWING_FACTOR = 0.5f
-        const val SHOOTING_RATE = 0.3f
+        const val SHOOTING_RATE = 0.5f
 
         private val horizontalSpeedMap = mapOf(
             false to mapOf(

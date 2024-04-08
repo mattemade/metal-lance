@@ -8,20 +8,16 @@ class Enemy(
     texture: Texture,
     private val explosionTexture: Texture,
     private val positionDt: (position: Vector2, t: Float) -> Unit,
-    initialShootingDelay: Float = -1f,
-    shootingPeriod: Float = -1f,
+    nextShootingDelay: () -> Float,
     private val shot: (Enemy) -> Unit
 ) : SimpleSprite(texture) {
 
     val internalPosition = Vector2().also { positionDt(it, 0f) }
-    private var internalTimer = 0f
+    var internalTimer = 0f
+        private set
     var isAlive = true
         private set
-    private var shootingRepeater =
-        DelayedRepeater(
-            initialDelay = initialShootingDelay,
-            repeatPeriod = shootingPeriod
-        ) { shot(this) }
+    private var shootingRepeater = DelayedRepeater(nextShootingDelay) { shot(this) }
 
     fun update(delta: Float) {
         if (isAlive) {

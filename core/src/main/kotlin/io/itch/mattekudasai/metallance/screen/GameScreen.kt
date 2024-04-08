@@ -1,9 +1,11 @@
 package io.itch.mattekudasai.metallance.screen
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
@@ -17,6 +19,7 @@ import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
+import kotlin.math.max
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -31,18 +34,22 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
         )
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
+    private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.WHITE } }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
     private val shots = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val enemies = mutableDisposableListOf<Enemy>(onDisposed = ::forget).autoDisposing()
     private val enemyShots = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
+    private val powerUps = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
+    private val bombs = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
 
     // TODO: pack all the textures in one 2048x2048 atlas to avoid constant rebinding
     private val shotTexture: Texture by remember { Texture("shot.png") }
     private val enemyTexture: Texture by remember { Texture("saucer.png") }
     private val explosionTexture: Texture by remember { Texture("explosion.png") }
     private val enemyShotTexture: Texture by remember { Texture("wave.png") }
-    private val enemySpawner = DelayedRepeater(initialDelay = 2f, repeatPeriod = 1f) {
+    private val powerUpTexture: Texture by remember { Texture("power.png") }
+    private val enemySpawner = DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.1f, 2f - totalGameTime / 45f) }) {
         val horizontalPosition = 20f + 200f * Random.nextFloat()
         val startOscillation = Random.nextFloat() * Math.PI.toFloat()
         val oscillationSpeed = Random.nextFloat() * 6f
@@ -55,9 +62,8 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
                     horizontalPosition + sin(startOscillation + time * oscillationSpeed) * 20f
                 )
             },
-            initialShootingDelay = 0.5f,
-            shootingPeriod = 1f,
-            shot = ::enemyShoot
+            nextShootingDelay = { max(0.1f, 2f - totalGameTime / 60f) },
+            shot = if (Random.nextBoolean()) ::spawnStandardEnemyShot else ::spawnSunEnemyShot
         )
     }
 
@@ -73,9 +79,44 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
         )
     }
 
-    private fun enemyShoot(enemy: Enemy) {
-        val isStraight = totalGameTime < 5f
-        val isHoming = totalGameTime > 10f//Random.nextBoolean()
+    private fun spawnSunEnemyShot(enemy: Enemy) {
+        val step = when {
+            enemy.internalTimer < 1f -> 90
+            enemy.internalTimer < 2.5f -> 45
+            enemy.internalTimer < 4f -> 30
+            else -> 15
+        }
+        val speedFactor = when {
+            enemy.internalTimer < 1f -> 0.5f
+            enemy.internalTimer < 2.5f -> 0.75f
+            enemy.internalTimer < 4f -> 1f
+            else -> 1.25f
+        }
+        for (angle in 0..360 step step) {
+            var wasSet = false
+            var wasHomed = false
+            enemyShots += Shot(
+                enemy.internalPosition.cpy(),
+                { shot, time ->
+                    if (!wasSet) {
+                        wasSet = true
+                        shot.direction.set(Shot.SPEED_SLOW * speedFactor, 0f).rotateDeg(angle.toFloat())
+                    }
+                    if (!wasHomed && time > (0.5f / speedFactor)) {
+                        wasHomed = true
+                        shot.direction
+                            .set(flagship.internalPosition.cpy().sub(shot.internalPosition))
+                            .setLength(Shot.SPEED_SLOW * speedFactor)
+                    }
+                },
+                enemyShotTexture
+            )
+        }
+    }
+
+    private fun spawnStandardEnemyShot(enemy: Enemy) {
+        val isStraight = totalGameTime < 20f
+        val isHoming = totalGameTime > 40f//Random.nextBoolean()
         var wasSetOnce = false
         enemyShots += Shot(
             enemy.internalPosition.cpy(),
@@ -95,13 +136,23 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
         )
     }
 
+    private fun spawnPowerup(location: Vector2) {
+        var wasSetOnce = false
+        powerUps += Shot(
+            location.cpy(),
+            { shot, time ->
+                if (!wasSetOnce) {
+                    shot.direction.set(-Shot.SPEED_POWER_UP, 0f)
+                    wasSetOnce = true
+                }
+            },
+            powerUpTexture,
+            isRotating = false
+        )
+    }
+
     private val Vector2.isOnScreen: Boolean
         get() = x > -10f && x < (viewport.worldWidth + 10f) && y > -10f && y < (viewport.worldHeight + 10f)
-
-    private var fpsTimer = 0f
-    private var currentFrames = 0
-    private var totalTime = 0f
-    private var frameCounter = 0
 
     private var totalGameTime = 0f
 
@@ -110,38 +161,46 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
     override fun render(delta: Float) {
         evenFrame = !evenFrame
         totalGameTime += delta
-        fpsTimer += delta
-        frameCounter++
-        currentFrames++
-        totalTime += delta
 
-        while (fpsTimer > 1f) {
-            Gdx.app.debug("FPS", "${currentFrames}")
-            Gdx.app.debug("AvgFPS", "${frameCounter / totalTime}")
-            fpsTimer -= 1f
-            currentFrames = 0
-        }
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
         flagship.update(delta)
         enemySpawner.update(delta)
-        enemies.removeAll {
-            it.update(delta)
-            if (it.shouldBeRemoved || !it.internalPosition.isOnScreen) {
+        enemies.removeAll { enemy ->
+            enemy.update(delta)
+            if (enemy.shouldBeRemoved || !enemy.internalPosition.isOnScreen) {
                 return@removeAll true
             }
-            // flagship collision check
+            if (enemy.isAlive) {
+                bombs.forEach { bomb ->
+                    if (bomb.hits(enemy.internalPosition, bomb.internalTimer * 200f)) {
+                        enemy.explode()
+                    }
+                }
+            }
+            // TODO: add flagship collision check
             false
         }
-        enemyShots.removeAll {
-            it.update(delta)
-            if (!it.internalPosition.isOnScreen) {
+        enemyShots.removeAll { enemyShot ->
+            enemyShot.update(delta)
+            if (!enemyShot.internalPosition.isOnScreen) {
                 return@removeAll true
             }
+            bombs.forEach { bomb ->
+                if (bomb.hits(enemyShot.internalPosition, bomb.internalTimer * 200f)) {
+                    return@removeAll true
+                }
+            }
             // flagship collision check
-            val flagshipHit = flagship.isAlive && !flagship.isInvincible && it.hits(flagship.internalPosition, 1.5f)
+            val flagshipHit = !flagship.isInvincible && flagship.collides(enemyShot, 3f, 1.5f)
             if (flagshipHit) {
-                flagship.explode()
+                bombs += Shot(
+                    flagship.internalPosition.cpy(),
+                    { _, _ -> },
+                    explosionTexture,
+                    isRotating = false
+                )
+                flagship.startOver()
             }
             flagshipHit
         }
@@ -156,23 +215,51 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
                 if (enemy.isAlive && shot.hits(enemy.internalPosition, 10f)) {
                     removeShot = true
                     enemy.explode()
+                    spawnPowerup(enemy.internalPosition)
                     break
                 }
             }
             removeShot
         }
-
-
+        powerUps.removeAll { powerUp ->
+            powerUp.update(delta)
+            if (!powerUp.internalPosition.isOnScreen) {
+                return@removeAll true
+            }
+            // flagship collision check
+            val flagshipHit = flagship.collides(powerUp, 8f, 6f)
+            if (flagshipHit) {
+                flagship.powerUp()
+            }
+            flagshipHit
+        }
+        bombs.removeAll { bomb ->
+            bomb.update(delta)
+            bomb.internalTimer * 200f > viewport.worldHeight * 1.27f
+        }
 
         viewport.apply(true)
+        if (bombs.isNotEmpty()) {
+            shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+                bombs.forEach {
+                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
+                }
+            }
+        }
         batch.use(camera) { batch ->
             enemyShots.forEach { it.draw(batch) }
             enemies.forEach { it.draw(batch) }
             shots.forEach { it.draw(batch) }
+            powerUps.forEach { it.draw(batch) }
+            //bombs.forEach { it.draw(batch) }
             if (!flagship.isInvincible || evenFrame) {
                 flagship.draw(batch)
             }
         }
+    }
+
+    fun Flagship.collides(item: Shot, rearDistance: Float, frontDistance: Float): Boolean {
+        return flagship.isAlive && (item.hits(rearPosition, rearDistance) || item.hits(frontPosition, frontDistance))
     }
 
     override fun resize(width: Int, height: Int) {
