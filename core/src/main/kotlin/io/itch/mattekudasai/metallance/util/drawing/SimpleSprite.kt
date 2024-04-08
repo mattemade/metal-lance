@@ -5,12 +5,13 @@ import com.badlogic.gdx.graphics.g2d.Sprite
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 
-open class SimpleSprite(texture: Texture) : Sprite(texture), Disposing by Self() {
+open class SimpleSprite(texture: Texture, private val shouldManagerTextureDisposing: Boolean = false) : Sprite(texture), Disposing by Self() {
 
-    constructor(internalTexturePath: String) : this(Texture(internalTexturePath))
-
+    constructor(internalTexturePath: String) : this(Texture(internalTexturePath), shouldManagerTextureDisposing = true)
     init {
-        texture.autoDisposing()
+        if (shouldManagerTextureDisposing) {
+            texture.autoDisposing()
+        }
     }
 
 }

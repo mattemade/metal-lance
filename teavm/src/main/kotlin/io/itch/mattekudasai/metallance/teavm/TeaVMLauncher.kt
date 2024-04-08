@@ -9,8 +9,8 @@ import io.itch.mattekudasai.metallance.MetalLanceGame
 /** Launches the TeaVM/HTML application. */
 fun main() {
     val config = TeaApplicationConfiguration("canvas").apply {
-        width = 640
-        height = 480
+        width = 0 // use all available space
+        height = 0 // use all available space
     }
     TeaApplication(MetalLanceGame(), config)
 }

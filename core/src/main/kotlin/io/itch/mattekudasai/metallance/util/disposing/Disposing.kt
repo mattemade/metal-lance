@@ -7,4 +7,5 @@ interface Disposing : Disposable {
     fun <T : Disposable> T.autoDisposing(): T
     fun <T : Disposable> managed(block: () -> T): T
     fun <K> K.registerAsContextDisposer(applicableTo: Class<*>, block: K.(Any?) -> Unit): K
+    fun <T: Disposable> forget(disposable: T)
 }

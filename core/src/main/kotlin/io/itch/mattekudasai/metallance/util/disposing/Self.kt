@@ -1,6 +1,5 @@
 package io.itch.mattekudasai.metallance.util.disposing
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.utils.Disposable
 import ktx.assets.disposeSafely
 
@@ -22,8 +21,11 @@ internal class Self : Disposing {
         return this
     }
 
+    override fun <T : Disposable> forget(disposable: T) {
+        disposables.remove(disposable)
+    }
+
     override fun dispose() {
-        Gdx.app.debug("SelfDisposing", "Self disposing from $this of ${disposables.joinToString()} having $contextDisposers")
         disposables.forEach {
             if (it is HasContext<*>) {
                 it.context.forEach { (clazz, context) ->

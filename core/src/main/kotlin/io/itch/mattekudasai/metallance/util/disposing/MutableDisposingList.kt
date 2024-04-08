@@ -3,18 +3,27 @@ package io.itch.mattekudasai.metallance.util.disposing
 import com.badlogic.gdx.utils.Disposable
 import ktx.assets.disposeSafely
 
-class MutableDisposingList<T: Disposable>(private val list: MutableList<T> = mutableListOf()): MutableList<T> by list, Disposable {
+class MutableDisposingList<T : Disposable>(
+    private val list: MutableList<T> = mutableListOf(),
+    private val onDisposed: (T) -> Unit
+) : MutableList<T> by list,
+    Disposable {
+
+    override fun add(element: T): Boolean {
+        return list.add(element)
+    }
 
     override fun clear() {
-        list.forEach { it.disposeSafely() }
+        list.forEach { it.also(onDisposed).disposeSafely() }
         list.clear()
     }
 
-    override fun removeAt(index: Int): T =
-        list.removeAt(index).also { it.disposeSafely() }
+    override fun removeAt(index: Int): T {
+        return list.removeAt(index).also { it.also(onDisposed).disposeSafely() }
+    }
 
     override fun set(index: Int, element: T): T =
-        list.set(index, element).also { it.disposeSafely() }
+        list.set(index, element).also { it.also(onDisposed).disposeSafely() }
 
     override fun retainAll(elements: Collection<T>): Boolean {
         TODO("Not yet implemented")
@@ -24,12 +33,44 @@ class MutableDisposingList<T: Disposable>(private val list: MutableList<T> = mut
         TODO("Not yet implemented")
     }
 
+    override fun iterator(): MutableIterator<T> = IteratorWrapper(list.listIterator()) {
+        it.also(onDisposed).disposeSafely()
+    }
+
+    override fun listIterator(): MutableListIterator<T> = IteratorWrapper(list.listIterator()) {
+        TODO("Not yet implemented")
+    }
+
     override fun remove(element: T): Boolean {
+        element.also(onDisposed).disposeSafely()
         return list.remove(element)
     }
 
     override fun dispose() {
         clear()
     }
+
+    private class IteratorWrapper<T : Disposable>(
+        private val listIterator: MutableListIterator<T>,
+        private val onRemoved: (T) -> Unit
+    ) : MutableListIterator<T> by listIterator {
+
+        private lateinit var current: T
+        override fun next(): T =
+            listIterator.next().also { current = it }
+
+        override fun remove() {
+            onRemoved(current)
+            listIterator.remove()
+        }
+
+        override fun set(element: T) {
+            onRemoved(current)
+            listIterator.set(element)
+        }
+    }
 }
-inline fun <T: Disposable> mutableDisposableListOf(): MutableDisposingList<T> = MutableDisposingList()
+
+
+inline fun <T : Disposable> mutableDisposableListOf(noinline onDisposed: (T) -> Unit): MutableDisposingList<T> =
+    MutableDisposingList(onDisposed = onDisposed)

@@ -1,5 +1,6 @@
 package io.itch.mattekudasai.metallance.player
 
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.player.Controls.isBackward
 import io.itch.mattekudasai.metallance.player.Controls.isDown
@@ -9,10 +10,28 @@ import io.itch.mattekudasai.metallance.player.Controls.isSlow
 import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import ktx.app.KtxInputAdapter
+import kotlin.math.exp
 
-class Flagship(private val onShot: (x: Float, y: Float) -> Unit) : SimpleSprite("ship.png"), KtxInputAdapter {
+// TODO: think about dynamic world width/height
+class Flagship(
+    private val worldWidth: Float,
+    private val worldHeight: Float,
+    private val explosionTexture: Texture,
+    private val shot: () -> Unit
+) :
+    SimpleSprite("ship.png"), KtxInputAdapter {
 
-    private val state = State()
+    private val state = State(40f, worldHeight / 2f)
+    val internalPosition: Vector2 get() = state.position
+    private val normalTexture = texture
+
+    private val halfWidth = width / 2f
+    private val halfHeight = height / 2f
+    var isAlive = true
+      private set
+
+    val isInvincible: Boolean
+        get() = isAlive && timeToStartOver > 0f
 
     override fun keyDown(keycode: Int): Boolean {
         with(state) {
@@ -44,8 +63,17 @@ class Flagship(private val onShot: (x: Float, y: Float) -> Unit) : SimpleSprite(
 
 
     private val movingTo = Vector2()
+    private var timeToStartOver = 0f
 
     fun update(delta: Float) {
+        timeToStartOver -= delta
+        if (!isAlive) {
+            if (timeToStartOver > 0f) {
+                return
+            }
+            startOver()
+            // not returning!
+        }
         movingTo.set(
             delta * horizontalSpeedMap[state.flyingForward]!![state.flyingBackward]!!,
             delta * verticalSpeedMap[state.flyingUp]!![state.flyingDown]!!
@@ -56,24 +84,55 @@ class Flagship(private val onShot: (x: Float, y: Float) -> Unit) : SimpleSprite(
         if (state.slow) {
             movingTo.scl(SLOWING_FACTOR)
         }
-        state.x += movingTo.x
-        state.y += movingTo.y
-        setPosition((state.x - width/2f).toInt().toFloat(), (state.y - height/2f).toInt().toFloat())
+        state.position.add(movingTo)
+        with(state.position) {
+            add(movingTo)
+            if (x < halfWidth) {
+                x = halfWidth
+            } else if (x > worldWidth - halfWidth) {
+                x = worldWidth - halfWidth
+            }
+            if (y < halfHeight) {
+                y = halfHeight
+            } else if (y > worldHeight - halfHeight) {
+                y = worldHeight - halfHeight
+            }
+        }
+        setPosition(
+            (state.position.x - halfWidth).toInt().toFloat(),
+            (state.position.y - halfHeight).toInt().toFloat()
+        )
 
-        if (state.timeFromLastShot > 0.5f && state.shooting) {
+        if (state.timeFromLastShot > SHOOTING_RATE && state.shooting) {
             state.timeFromLastShot = 0f
-            onShot(state.x, state.y)
+            shot()
         }
         state.timeFromLastShot += delta
     }
 
+    fun explode() {
+        isAlive = false
+        texture = explosionTexture
+        setBounds(0f, 0f, explosionTexture.width.toFloat(), explosionTexture.height.toFloat())
+        setPosition(state.position.x - explosionTexture.width / 2, state.position.y - explosionTexture.height / 2)
+        timeToStartOver = 1f
+    }
+
+    fun startOver() {
+        isAlive = true
+        texture = normalTexture
+        setBounds(0f, 0f, normalTexture.width.toFloat(), normalTexture.height.toFloat())
+        timeToStartOver = 2f
+        state.position.set(40f, worldHeight / 2f)
+    }
+
     companion object {
-        const val SPEED_LIMIT = 200f
+        const val SPEED_LIMIT = 100f
         const val HORIZONTAL_SPEED = SPEED_LIMIT
         const val VERTICAL_SPEED = SPEED_LIMIT * 0.66f
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)
         const val SLOWING_FACTOR = 0.5f
-        const val SHOOTING_RATE = 0.5f
+        const val SHOOTING_RATE = 0.3f
 
         private val horizontalSpeedMap = mapOf(
             false to mapOf(
