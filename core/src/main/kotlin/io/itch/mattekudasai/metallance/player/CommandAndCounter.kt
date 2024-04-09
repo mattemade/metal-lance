@@ -11,7 +11,7 @@ class CommandAndCounter: ReadWriteProperty<State, Boolean> {
     override fun setValue(thisRef: State, property: KProperty<*>, value: Boolean) {
         if (value) {
             counter++
-        } else {
+        } else if (counter > 0) {
             counter--
         }
     }

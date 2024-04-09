@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.Align
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
+import io.itch.mattekudasai.metallance.util.files.overridable
 
 class MonoSpaceTextDrawer(
     fontFileName: String,
@@ -22,7 +23,7 @@ class MonoSpaceTextDrawer(
     val drawingVerticalSpacing: Float = 0f,
 ) : Disposing by Self() {
 
-    private val font: Texture by remember { Texture(fontFileName) }
+    private val font: Texture by remember { Texture(fontFileName.overridable) }
     private val letters = mutableMapOf<Char, TextureRegion>().apply {
         var column = 0
         var row = 0
@@ -60,13 +61,18 @@ class MonoSpaceTextDrawer(
     private val String.drawingWidth: Float
         get() = length.drawingWidth
 
+    /** @return number of drawn characters: caller could use it to check if it is changed  */
     fun drawText(
         batch: SpriteBatch,
         text: List<String>,
         x: Float,
         y: Float,
-        align: Int = Align.topRight
-    ) {
+        align: Int = Align.topRight,
+        characterLimit: Int = Int.MAX_VALUE,
+    ): Int {
+        if (text.size == 0) {
+            return 0
+        }
         val textBoxWidth = text.maxOf { it.length }.drawingWidth
         val textBoxHeight = text.size.let { it * drawingLetterHeight + (it-1) * drawingVerticalSpacing }
         val startPositionX: Float = when {
@@ -81,20 +87,22 @@ class MonoSpaceTextDrawer(
             Align.isCenterVertical(align) -> y - textBoxHeight/2f
             else -> throw IllegalArgumentException("Provide a correct align instead of $align")
         }
-
+        var drawnCharacters = 0
         text.forEachIndexed { row, line ->
             val lineStartX = startPositionX + (textBoxWidth - line.length.drawingWidth) / 2f
             line.forEachIndexed { column, char ->
-                if (char != ' ') {
+                if (char != ' ' && drawnCharacters < characterLimit) {
+                    drawnCharacters++
                     batch.draw(
                         letters[char],
                         lineStartX + column * (drawingLetterWidth + drawingHorizontalSpacing),
-                        startPositionY + row * (drawingLetterHeight + drawingVerticalSpacing),
+                        startPositionY + textBoxHeight - row * (drawingLetterHeight + drawingVerticalSpacing),
                         drawingLetterWidth,
                         drawingLetterHeight
                     )
                 }
             }
         }
+        return drawnCharacters
     }
 }

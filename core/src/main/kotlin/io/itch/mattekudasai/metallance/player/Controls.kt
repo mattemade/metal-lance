@@ -11,10 +11,14 @@ object Controls {
     private val shootKeycodes = setOf(Keys.J, Keys.X, Keys.SPACE)
     private val slowKeycodes = setOf(Keys.SHIFT_LEFT, Keys.SHIFT_RIGHT, Keys.K, Keys.Z)
 
+    private val allKeys = forwardKeycodes + backwardKeycodes + upKeycodes + downKeycodes + shootKeycodes + slowKeycodes
+
     val Int.isForward: Boolean get() = forwardKeycodes.contains(this)
     val Int.isBackward: Boolean get() = backwardKeycodes.contains(this)
     val Int.isUp: Boolean get() = upKeycodes.contains(this)
     val Int.isDown: Boolean get() = downKeycodes.contains(this)
     val Int.isShoot: Boolean get() = shootKeycodes.contains(this)
     val Int.isSlow: Boolean get() = slowKeycodes.contains(this)
+
+    val Int.isAnyKey: Boolean get() = allKeys.contains(this)
 }

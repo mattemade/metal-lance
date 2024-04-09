@@ -1,6 +1,7 @@
 package io.itch.mattekudasai.metallance.screen
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -15,6 +16,9 @@ import io.itch.mattekudasai.metallance.player.Shot
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.disposing.mutableDisposableListOf
+import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
+import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
+import io.itch.mattekudasai.metallance.util.files.overridable
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
@@ -35,6 +39,7 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.WHITE } }
+    private val filledShapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.BLACK } }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
     private val shots = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
@@ -44,31 +49,48 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
     private val bombs = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
 
     // TODO: pack all the textures in one 2048x2048 atlas to avoid constant rebinding
-    private val shotTexture: Texture by remember { Texture("shot.png") }
-    private val enemyTexture: Texture by remember { Texture("saucer.png") }
-    private val explosionTexture: Texture by remember { Texture("explosion.png") }
-    private val enemyShotTexture: Texture by remember { Texture("wave.png") }
-    private val powerUpTexture: Texture by remember { Texture("power.png") }
-    private val enemySpawner = DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.1f, 2f - totalGameTime / 45f) }) {
-        val horizontalPosition = 20f + 200f * Random.nextFloat()
-        val startOscillation = Random.nextFloat() * Math.PI.toFloat()
-        val oscillationSpeed = Random.nextFloat() * 6f
-        enemies += Enemy(
-            texture = enemyTexture,
-            explosionTexture = explosionTexture,
-            positionDt = { position, time ->
-                position.set(
-                    260f - time * 50f,
-                    horizontalPosition + sin(startOscillation + time * oscillationSpeed) * 20f
-                )
-            },
-            nextShootingDelay = { max(0.1f, 2f - totalGameTime / 60f) },
-            shot = if (Random.nextBoolean()) ::spawnStandardEnemyShot else ::spawnSunEnemyShot
+    private val shotTexture: Texture by remember { Texture("shot.png".overridable) }
+    private val enemyTexture: Texture by remember { Texture("saucer.png".overridable) }
+    private val explosionTexture: Texture by remember { Texture("explosion.png".overridable) }
+    private val enemyShotTexture: Texture by remember { Texture("wave.png".overridable) }
+    private val powerUpTexture: Texture by remember { Texture("power.png".overridable) }
+    private val enemySpawner =
+        DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.1f, 2f - totalGameTime / 45f) }) {
+            val horizontalPosition = 20f + 200f * Random.nextFloat()
+            val startOscillation = Random.nextFloat() * Math.PI.toFloat()
+            val oscillationSpeed = Random.nextFloat() * 6f
+            enemies += Enemy(
+                texture = enemyTexture,
+                explosionTexture = explosionTexture,
+                positionDt = { position, time ->
+                    position.set(
+                        260f - time * 50f,
+                        horizontalPosition + sin(startOscillation + time * oscillationSpeed) * 20f
+                    )
+                },
+                nextShootingDelay = { max(0.1f, 2f - totalGameTime / 60f) },
+                shot = if (Random.nextBoolean()) ::spawnStandardEnemyShot else ::spawnSunEnemyShot
+            )
+        }
+
+    val textDrawer: MonoSpaceTextDrawer by remember {
+        MonoSpaceTextDrawer(
+            fontFileName = "font_white.png",
+            alphabet = ('A'..'Z').joinToString(separator = ""),
+            fontLetterWidth = 5,
+            fontLetterHeight = 9,
+            fontHorizontalSpacing = 1,
+            fontVerticalSpacing = 0,
+            fontHorizontalPadding = 1,
         )
     }
+    val delayedTextDrawer = DelayedTextDrawer(textDrawer, 0.125f)
+    private val music: Music by remember { Gdx.audio.newMusic("music/stage1.ogg".overridable) }
 
     init {
         Gdx.input.inputProcessor = this
+        music.play()
+        music.isLooping = true
     }
 
     private fun shoot() {
@@ -136,7 +158,7 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
         )
     }
 
-    private fun spawnPowerup(location: Vector2) {
+    private fun spawnPowerUp(location: Vector2) {
         var wasSetOnce = false
         powerUps += Shot(
             location.cpy(),
@@ -215,7 +237,7 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
                 if (enemy.isAlive && shot.hits(enemy.internalPosition, 10f)) {
                     removeShot = true
                     enemy.explode()
-                    spawnPowerup(enemy.internalPosition)
+                    spawnPowerUp(enemy.internalPosition)
                     break
                 }
             }
@@ -239,7 +261,15 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
         }
 
         viewport.apply(true)
+        batch.use(camera) { batch ->
+            enemyShots.forEach { it.draw(batch) }
+        }
         if (bombs.isNotEmpty()) {
+            filledShapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) { renderer ->
+                bombs.forEach {
+                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
+                }
+            }
             shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
                 bombs.forEach {
                     renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
@@ -247,7 +277,7 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
             }
         }
         batch.use(camera) { batch ->
-            enemyShots.forEach { it.draw(batch) }
+            /*enemyShots.forEach { it.draw(batch) }*/
             enemies.forEach { it.draw(batch) }
             shots.forEach { it.draw(batch) }
             powerUps.forEach { it.draw(batch) }
@@ -255,6 +285,7 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
             if (!flagship.isInvincible || evenFrame) {
                 flagship.draw(batch)
             }
+            delayedTextDrawer.updateAndDraw(delta, batch)
         }
     }
 

@@ -13,6 +13,7 @@ object TeaVMBuilder {
         val teaBuildConfiguration = TeaBuildConfiguration().apply {
             assetsPath.add(File("../assets"))
             webappPath = File("build/dist").canonicalPath
+            showLoadingLogo = false
             // Register any extra classpath assets here:
             // additionalAssetsClasspathFiles += "io/itch/mattekudasai/metallance/asset.extension"
         }
