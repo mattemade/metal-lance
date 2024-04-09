@@ -1,5 +1,8 @@
 package io.itch.mattekudasai.metallance.player
 
+import com.badlogic.gdx.Application
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.player.Controls.isBackward
@@ -9,31 +12,52 @@ import io.itch.mattekudasai.metallance.player.Controls.isShoot
 import io.itch.mattekudasai.metallance.player.Controls.isSlow
 import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
+import io.itch.mattekudasai.metallance.util.files.overridable
 import ktx.app.KtxInputAdapter
+import kotlin.math.max
+import kotlin.math.min
 
 // TODO: think about dynamic world width/height
 class Flagship(
     private val worldWidth: Float,
     private val worldHeight: Float,
     private val explosionTexture: Texture,
-    private val shot: () -> Unit
-) :
-    SimpleSprite("ship.png"), KtxInputAdapter {
+    private val shot: (shipType: Int) -> Unit
+) : SimpleSprite("texture/ship/normal.png"), KtxInputAdapter {
 
     private val state = State(40f, worldHeight / 2f)
     val internalPosition: Vector2 get() = state.position
     val rearPosition = Vector2()
     val frontPosition = Vector2()
-    private val normalTexture = texture
+    private val shipTextures = listOf(
+        texture,
+        Texture("texture/ship/double.png".overridable).autoDisposing(),
+        Texture("texture/ship/triple.png".overridable).autoDisposing(),
+        Texture("texture/ship/quadriple.png".overridable).autoDisposing(),
+        Texture("texture/ship/quintiple.png".overridable).autoDisposing(),
+    )
+    private var shipType = 0
+        set(value) {
+            val constrainedValue = min(shipTextures.size - 1, value)
+            texture = shipTextures[constrainedValue]
+            val textureWidth = texture.width.toFloat()
+            val textureHeight = texture.height.toFloat()
+            setBounds(0f, 0f, textureWidth, textureHeight)
+            setPosition(
+                (state.position.x - textureWidth/2f).toInt().toFloat(),
+                (state.position.y - textureHeight/2f).toInt().toFloat()
+            )
+            field = constrainedValue
+        }
 
-    private val halfWidth = width / 2f
-    private val halfHeight = height / 2f
     private var shootingRate = SHOOTING_RATE
     var isAlive = true
       private set
 
     val isInvincible: Boolean
         get() = isAlive && timeToStartOver > 0f
+
+    var slowingTransition: Float = 0f
 
     override fun keyDown(keycode: Int): Boolean {
         with(state) {
@@ -44,6 +68,7 @@ class Flagship(
                 keycode.isDown -> flyingDown = true
                 keycode.isShoot -> shooting = true
                 keycode.isSlow -> slow = true
+                Gdx.app.logLevel == Application.LOG_DEBUG && keycode == Input.Keys.T -> transform()
             }
         }
         return true
@@ -85,8 +110,17 @@ class Flagship(
         }
         if (state.slow) {
             movingTo.scl(SLOWING_FACTOR)
+            if (slowingTransition < 1f) {
+                slowingTransition = min(1f, slowingTransition + delta / SLOWING_TRANSITION_TIME)
+            }
+        } else if (slowingTransition > 0f) {
+            slowingTransition = max(0f, slowingTransition - delta / SLOWING_TRANSITION_TIME)
         }
         state.position.add(movingTo)
+
+
+        val halfWidth = width / 2f
+        val halfHeight = height / 2f
         with(state.position) {
             add(movingTo)
             if (x < halfWidth) {
@@ -107,7 +141,7 @@ class Flagship(
 
         if (state.timeFromLastShot > shootingRate && state.shooting) {
             state.timeFromLastShot = 0f
-            shot()
+            shot(shipType)
         }
         state.timeFromLastShot += delta
         rearPosition.set(state.position).sub(3f, 0f)
@@ -115,7 +149,15 @@ class Flagship(
     }
 
     fun powerUp() {
-        shootingRate /= 2f
+        shootingRate = max(0.1f, shootingRate * 0.66f)
+        if (shootingRate == 0.1f && shipType < shipTextures.size - 1) {
+            transform()
+            shootingRate = SHOOTING_RATE
+        }
+    }
+
+    fun transform() {
+        shipType++
     }
 
     // TODO: maybe reuse is for game over?
@@ -129,8 +171,7 @@ class Flagship(
 
     fun startOver() {
         isAlive = true
-        texture = normalTexture
-        setBounds(0f, 0f, normalTexture.width.toFloat(), normalTexture.height.toFloat())
+        shipType = 0
         timeToStartOver = 2f
         //state.position.set(40f, worldHeight / 2f)
         shootingRate = SHOOTING_RATE
@@ -143,6 +184,7 @@ class Flagship(
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)
         const val SLOWING_FACTOR = 0.5f
         const val SHOOTING_RATE = 0.5f
+        const val SLOWING_TRANSITION_TIME = 0.125f
 
         private val horizontalSpeedMap = mapOf(
             false to mapOf(

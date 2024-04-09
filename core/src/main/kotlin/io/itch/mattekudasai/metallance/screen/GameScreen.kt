@@ -27,7 +27,7 @@ import kotlin.math.max
 import kotlin.math.sin
 import kotlin.random.Random
 
-class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
+class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val flagship: Flagship by remember {
         Flagship(
@@ -49,13 +49,13 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
     private val bombs = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
 
     // TODO: pack all the textures in one 2048x2048 atlas to avoid constant rebinding
-    private val shotTexture: Texture by remember { Texture("shot.png".overridable) }
-    private val enemyTexture: Texture by remember { Texture("saucer.png".overridable) }
-    private val explosionTexture: Texture by remember { Texture("explosion.png".overridable) }
-    private val enemyShotTexture: Texture by remember { Texture("wave.png".overridable) }
-    private val powerUpTexture: Texture by remember { Texture("power.png".overridable) }
+    private val shotTexture: Texture by remember { Texture("texture/bullet/shot.png".overridable) }
+    private val enemyTexture: Texture by remember { Texture("texture/saucer.png".overridable) }
+    private val explosionTexture: Texture by remember { Texture("texture/explosion.png".overridable) }
+    private val enemyShotTexture: Texture by remember { Texture("texture/bullet/wave.png".overridable) }
+    private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
     private val enemySpawner =
-        DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.1f, 2f - totalGameTime / 45f) }) {
+        DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.25f, 2f - totalGameTime / 45f) }) {
             val horizontalPosition = 20f + 200f * Random.nextFloat()
             val startOscillation = Random.nextFloat() * Math.PI.toFloat()
             val oscillationSpeed = Random.nextFloat() * 6f
@@ -68,14 +68,14 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
                         horizontalPosition + sin(startOscillation + time * oscillationSpeed) * 20f
                     )
                 },
-                nextShootingDelay = { max(0.1f, 2f - totalGameTime / 60f) },
+                nextShootingDelay = { max(0.25f, 2f - totalGameTime / 60f) },
                 shot = if (Random.nextBoolean()) ::spawnStandardEnemyShot else ::spawnSunEnemyShot
             )
         }
 
     val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
-            fontFileName = "font_white.png",
+            fontFileName = "texture/font_white.png",
             alphabet = ('A'..'Z').joinToString(separator = ""),
             fontLetterWidth = 5,
             fontLetterHeight = 9,
@@ -89,16 +89,102 @@ class GameScreen : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     init {
         Gdx.input.inputProcessor = this
-        music.play()
-        music.isLooping = true
+        if (playMusic) {
+            music.play()
+            music.isLooping = true
+        }
     }
 
-    private fun shoot() {
-        shots += Shot(
-            flagship.internalPosition.cpy(),
-            { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-            shotTexture
-        )
+    private fun shoot(shipType: Int) {
+        val bigAngle = (1f - flagship.slowingTransition) * 45
+        val shortAngle = (1f - flagship.slowingTransition) * 30
+        val slowingOffset = flagship.slowingTransition * 5f
+        when (shipType) {
+            0 -> shots += Shot(
+                flagship.internalPosition.cpy(),
+                { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
+                shotTexture
+            )
+            1 -> {
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(0f, 3f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(0f, -3f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
+                    shotTexture
+                )
+            }
+            2 -> {
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f + slowingOffset, slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy(),
+                { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
+                shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f + slowingOffset, -slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
+                    shotTexture
+                )
+            }
+            3 -> {
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f, -2f - slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(1f, -slowingOffset / 2f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-shortAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f, 2f+slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(1f, slowingOffset / 2f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(shortAngle) },
+                    shotTexture
+                )
+            }
+            4 -> {
+                shots += Shot(
+                    flagship.internalPosition.cpy(),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-5f, -2f - slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f, -slowingOffset / 2f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-shortAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-5f, 2f+slowingOffset),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
+                    shotTexture
+                )
+                shots += Shot(
+                    flagship.internalPosition.cpy().add(-2f, slowingOffset / 2f),
+                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(shortAngle) },
+                    shotTexture
+                )
+            }
+        }
+
     }
 
     private fun spawnSunEnemyShot(enemy: Enemy) {

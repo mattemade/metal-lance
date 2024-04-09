@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
-import io.itch.mattekudasai.metallance.player.Controls
 import io.itch.mattekudasai.metallance.player.Controls.isAnyKey
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
@@ -26,7 +25,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
-            fontFileName = "font_white.png",
+            fontFileName = "texture/font_white.png",
             alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:",
             fontLetterWidth = 5,
             fontLetterHeight = 9,
@@ -126,7 +125,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         """.trimIndent().uppercase()
 
         private val textArray = lines.split("\n\n").map { it.split("\n") }
-        private val images = textArray.indices.map { "intro/intro$it.png" }
+        private val images = textArray.indices.map { "texture/intro/intro$it.png" }
     }
 
 }

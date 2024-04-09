@@ -2,7 +2,6 @@ package io.itch.mattekudasai.metallance.screen
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
-import com.badlogic.gdx.assets.loaders.MusicLoader
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -23,14 +22,14 @@ class TitleScreen(val startGame: () -> Unit) : KtxScreen, KtxInputAdapter, Dispo
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
-    private val metalTexture: Texture by remember { Texture("title/metal.png".overridable) }
-    private val lanceTexture: Texture by remember { Texture("title/lance.png".overridable) }
-    private val weaponTexture: Texture by remember { Texture("title/weapon.png".overridable) }
+    private val metalTexture: Texture by remember { Texture("texture/title/metal.png".overridable) }
+    private val lanceTexture: Texture by remember { Texture("texture/title/lance.png".overridable) }
+    private val weaponTexture: Texture by remember { Texture("texture/title/weapon.png".overridable) }
     private val music: Music by remember { Gdx.audio.newMusic("music/title.ogg".overridable) }
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
-            fontFileName = "font_white.png",
+            fontFileName = "texture/font_white.png",
             alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:",
             fontLetterWidth = 5,
             fontLetterHeight = 9,

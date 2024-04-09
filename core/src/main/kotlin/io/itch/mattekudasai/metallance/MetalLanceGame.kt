@@ -8,15 +8,17 @@ import io.itch.mattekudasai.metallance.screen.TitleScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
-import ktx.assets.disposeSafely
 
 class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
     override fun create() {
         // TODO: switch to LOG_NONE
         Gdx.app.logLevel = Application.LOG_DEBUG
-        // TODO: add start screen
-        // TODO: add intro screen
-        showIntro()
+        // TODO: showIntro() instead
+        if (true) {
+            switchToScreen(GameScreen(playMusic = false))
+        } else {
+            showIntro()
+        }
     }
 
     private fun showIntro() {
