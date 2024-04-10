@@ -7,12 +7,13 @@ import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 class Enemy(
     texture: Texture,
     private val explosionTexture: Texture,
-    private val positionDt: (position: Vector2, t: Float) -> Unit,
+    val initialPosition: Vector2,
+    private val updatePositionDt: Enemy.(t: Float) -> Unit = { },
     nextShootingDelay: () -> Float,
-    private val shot: (Enemy) -> Unit
+    private val shot: (Enemy) -> Unit,
 ) : SimpleSprite(texture) {
 
-    val internalPosition = Vector2().also { positionDt(it, 0f) }
+    val internalPosition: Vector2 = initialPosition.cpy()
     var internalTimer = 0f
         private set
     var isAlive = true
@@ -22,7 +23,7 @@ class Enemy(
     fun update(delta: Float) {
         if (isAlive) {
             internalTimer += delta
-            positionDt(internalPosition, internalTimer)
+            updatePositionDt(internalTimer)
             setPosition(
                 (internalPosition.x - width / 2f).toInt().toFloat(),
                 (internalPosition.y - height / 2f).toInt().toFloat()

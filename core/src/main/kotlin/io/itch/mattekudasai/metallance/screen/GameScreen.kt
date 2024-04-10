@@ -8,11 +8,12 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.FitViewport
-import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.player.Shot
+import io.itch.mattekudasai.metallance.stage.Level
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.disposing.mutableDisposableListOf
@@ -23,9 +24,8 @@ import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
-import kotlin.math.max
-import kotlin.math.sin
-import kotlin.random.Random
+import kotlin.math.abs
+import kotlin.math.sign
 
 class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
@@ -38,7 +38,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         )
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
-    private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.WHITE } }
+    private val whiteShapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.WHITE } }
     private val filledShapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.BLACK } }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
@@ -54,29 +54,38 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
     private val explosionTexture: Texture by remember { Texture("texture/explosion.png".overridable) }
     private val enemyShotTexture: Texture by remember { Texture("texture/bullet/wave.png".overridable) }
     private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
-    private val enemySpawner =
-        DelayedRepeater(nextDelay = { /*if (true) 100f else */max(0.25f, 2f - totalGameTime / 45f) }) {
-            val horizontalPosition = 20f + 200f * Random.nextFloat()
-            val startOscillation = Random.nextFloat() * Math.PI.toFloat()
-            val oscillationSpeed = Random.nextFloat() * 6f
+
+    private val level = Level(
+        scriptFile = "levels/tutorial.txt".overridable,
+        showText = {
+            delayedTextDrawer.startDrawing(
+                it.text,
+                it.positionX * viewport.worldWidth,
+                it.positionY * viewport.worldHeight
+            )
+        },
+        spawnEnemy = {
+            val initialPosition = Vector2()
+            if (Align.isRight(it.alignment)) {
+                initialPosition.set(viewport.worldWidth + 8f, it.alignmentFactor * viewport.worldHeight)
+            }
+            // TODO: nextShootingDelay and shot should be set from pattern
             enemies += Enemy(
                 texture = enemyTexture,
                 explosionTexture = explosionTexture,
-                positionDt = { position, time ->
-                    position.set(
-                        260f - time * 50f,
-                        horizontalPosition + sin(startOscillation + time * oscillationSpeed) * 20f
-                    )
-                },
-                nextShootingDelay = { max(0.25f, 2f - totalGameTime / 60f) },
-                shot = if (Random.nextBoolean()) ::spawnStandardEnemyShot else ::spawnSunEnemyShot
+                initialPosition = initialPosition,
+                updatePositionDt = it.updatePositionDt,
+                nextShootingDelay = { 2f },
+                shot = ::spawnHomingEnemyShot
             )
-        }
+        },
+        endSequence = {}
+    )
 
     val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
             fontFileName = "texture/font_white.png",
-            alphabet = ('A'..'Z').joinToString(separator = ""),
+            alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:",
             fontLetterWidth = 5,
             fontLetterHeight = 9,
             fontHorizontalSpacing = 1,
@@ -95,93 +104,44 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         }
     }
 
+    private fun spawnShot(offsetX: Float = 0f, offsetY: Float = 0f, angleDeg: Float = 0f): Shot =
+        Shot(
+            internalPosition = flagship.internalPosition.cpy().add(offsetX, offsetY),
+            initialDirection = Vector2(Shot.SPEED_FAST, 0f).rotateDeg(angleDeg),
+            texture = shotTexture
+        ).also { shots += it }
+
+
     private fun shoot(shipType: Int) {
         val bigAngle = (1f - flagship.slowingTransition) * 45
         val shortAngle = (1f - flagship.slowingTransition) * 30
         val slowingOffset = flagship.slowingTransition * 5f
         when (shipType) {
-            0 -> shots += Shot(
-                flagship.internalPosition.cpy(),
-                { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-                shotTexture
-            )
+            0 -> spawnShot()
             1 -> {
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(0f, 3f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(0f, -3f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-                    shotTexture
-                )
+                spawnShot(offsetY = 3f)
+                spawnShot(offsetY = -3f)
             }
+
             2 -> {
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f + slowingOffset, slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy(),
-                { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-                shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f + slowingOffset, -slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
-                    shotTexture
-                )
+                spawnShot(-2f + slowingOffset, slowingOffset, -bigAngle)
+                spawnShot()
+                spawnShot(-2f + slowingOffset, -slowingOffset, bigAngle)
             }
+
             3 -> {
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f, -2f - slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(1f, -slowingOffset / 2f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-shortAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f, 2f+slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(1f, slowingOffset / 2f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(shortAngle) },
-                    shotTexture
-                )
+                spawnShot(-2f, -2f - slowingOffset, -bigAngle)
+                spawnShot(1f, -slowingOffset / 2f, -shortAngle)
+                spawnShot(-2f, 2f + slowingOffset, bigAngle)
+                spawnShot(1f, slowingOffset / 2f, shortAngle)
             }
+
             4 -> {
-                shots += Shot(
-                    flagship.internalPosition.cpy(),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-5f, -2f - slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-bigAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f, -slowingOffset / 2f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(-shortAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-5f, 2f+slowingOffset),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(bigAngle) },
-                    shotTexture
-                )
-                shots += Shot(
-                    flagship.internalPosition.cpy().add(-2f, slowingOffset / 2f),
-                    { shot, _ -> shot.direction.set(Shot.SPEED_FAST, 0f).rotateDeg(shortAngle) },
-                    shotTexture
-                )
+                spawnShot(-5f, -2f - slowingOffset, -bigAngle)
+                spawnShot(-2f, -slowingOffset / 2f, -shortAngle)
+                spawnShot()
+                spawnShot(-5f, 2f + slowingOffset, bigAngle)
+                spawnShot(-2f, slowingOffset / 2f, shortAngle)
             }
         }
 
@@ -205,7 +165,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
             var wasHomed = false
             enemyShots += Shot(
                 enemy.internalPosition.cpy(),
-                { shot, time ->
+                { shot, time, delta ->
                     if (!wasSet) {
                         wasSet = true
                         shot.direction.set(Shot.SPEED_SLOW * speedFactor, 0f).rotateDeg(angle.toFloat())
@@ -222,13 +182,40 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         }
     }
 
+    private fun spawnHomingEnemyShot(enemy: Enemy, maxAngularSpeed: Float = 100f, isAvailableAt: (time: Float) -> Boolean = { true }) {
+        enemyShots += Shot(
+            enemy.internalPosition.cpy(),
+            initialDirection = Vector2(
+                flagship.internalPosition.cpy().sub(enemy.internalPosition)
+            ).setLength(Shot.SPEED_SLOW),
+            directionDt = { shot, time, delta ->
+                if (isAvailableAt(time)) {
+                    val currentAngle = shot.direction.angleDeg()
+                    val desiredRotation = flagship.internalPosition.cpy().sub(shot.internalPosition).angleDeg().let {
+                        // TODO: fix a nasty bug on break between 0 and 360
+                        minAbs(it - currentAngle, it + 360f - currentAngle)
+                    }.let {
+                        minAbs(it, maxAngularSpeed * delta * sign(it))
+                    }
+                    shot.direction.setAngleDeg(currentAngle + desiredRotation)
+                }
+            },
+            texture = enemyShotTexture
+        )
+    }
+
+    private inline fun minAbs(a: Float, b: Float) =
+        if (abs(a) > abs(b)) b else a
+    private inline fun maxAbs(a: Float, b: Float) =
+        if (abs(a) > abs(b)) a else b
+
     private fun spawnStandardEnemyShot(enemy: Enemy) {
         val isStraight = totalGameTime < 20f
         val isHoming = totalGameTime > 40f//Random.nextBoolean()
         var wasSetOnce = false
         enemyShots += Shot(
             enemy.internalPosition.cpy(),
-            { shot, time ->
+            { shot, time, delta ->
                 if ((isHoming && time < 1f) || !wasSetOnce) {
                     wasSetOnce = true
                     if (isStraight) {
@@ -245,16 +232,10 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
     }
 
     private fun spawnPowerUp(location: Vector2) {
-        var wasSetOnce = false
         powerUps += Shot(
             location.cpy(),
-            { shot, time ->
-                if (!wasSetOnce) {
-                    shot.direction.set(-Shot.SPEED_POWER_UP, 0f)
-                    wasSetOnce = true
-                }
-            },
-            powerUpTexture,
+            initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
+            texture = powerUpTexture,
             isRotating = false
         )
     }
@@ -272,8 +253,9 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
 
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
+        level.update(delta)
         flagship.update(delta)
-        enemySpawner.update(delta)
+        //enemySpawner.update(delta)
         enemies.removeAll { enemy ->
             enemy.update(delta)
             if (enemy.shouldBeRemoved || !enemy.internalPosition.isOnScreen) {
@@ -292,7 +274,10 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         enemyShots.removeAll { enemyShot ->
             enemyShot.update(delta)
             if (!enemyShot.internalPosition.isOnScreen) {
-                return@removeAll true
+                enemyShot.deadTime -= delta
+                if (enemyShot.deadTime < 0f) {
+                    return@removeAll true
+                }
             }
             bombs.forEach { bomb ->
                 if (bomb.hits(enemyShot.internalPosition, bomb.internalTimer * 200f)) {
@@ -304,7 +289,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
             if (flagshipHit) {
                 bombs += Shot(
                     flagship.internalPosition.cpy(),
-                    { _, _ -> },
+                    { _, _, _ -> },
                     explosionTexture,
                     isRotating = false
                 )
@@ -315,6 +300,10 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         shots.removeAll { shot ->
             shot.update(delta)
             if (!shot.internalPosition.isOnScreen) {
+                shot.deadTime -= delta
+                if (shot.deadTime < 0f) {
+                    return@removeAll true
+                }
                 return@removeAll true
             }
             // collision check
@@ -356,7 +345,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
                     renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
                 }
             }
-            shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+            whiteShapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
                 bombs.forEach {
                     renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
                 }
@@ -372,6 +361,9 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
                 flagship.draw(batch)
             }
             delayedTextDrawer.updateAndDraw(delta, batch)
+        }
+        whiteShapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
+            it.rect(0.5f, 0.5f, viewport.worldWidth - 1f, viewport.worldHeight - 1f)
         }
     }
 

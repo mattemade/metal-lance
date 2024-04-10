@@ -8,10 +8,12 @@ object Controls {
     private val backwardKeycodes = setOf(Keys.A, Keys.LEFT)
     private val upKeycodes = setOf(Keys.W, Keys.UP)
     private val downKeycodes = setOf(Keys.S, Keys.DOWN)
-    private val shootKeycodes = setOf(Keys.J, Keys.X, Keys.SPACE)
-    private val slowKeycodes = setOf(Keys.SHIFT_LEFT, Keys.SHIFT_RIGHT, Keys.K, Keys.Z)
+    private val shootKeycodes = setOf(Keys.K, Keys.Z)
+    private val lanceKeycodes = setOf(Keys.J, Keys.X)
+    private val slowKeycodes = setOf(Keys.SHIFT_LEFT, Keys.SHIFT_RIGHT)
 
-    private val allKeys = forwardKeycodes + backwardKeycodes + upKeycodes + downKeycodes + shootKeycodes + slowKeycodes
+    private val allKeys =
+        forwardKeycodes + backwardKeycodes + upKeycodes + downKeycodes + shootKeycodes + slowKeycodes + lanceKeycodes
 
     val Int.isForward: Boolean get() = forwardKeycodes.contains(this)
     val Int.isBackward: Boolean get() = backwardKeycodes.contains(this)

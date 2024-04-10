@@ -6,20 +6,25 @@ import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 
 class Shot(
     val internalPosition: Vector2,
-    private val directionDt: (shot: Shot, time: Float) -> Unit,
+    private val directionDt: ((shot: Shot, time: Float, delta: Float) -> Unit)? = null,
     texture: Texture,
     private val isRotating: Boolean = true,
+    initialDirection: Vector2? = null
 ) : SimpleSprite(texture) {
 
-    val direction: Vector2 = Vector2()
+    val direction: Vector2 = initialDirection ?: Vector2()
     private val previousPosition = internalPosition.cpy()
     var internalTimer = 0f
         private set
 
+    var deadTime = 3f // time to keep the shot off-screen, in case it will return back
+
     fun update(delta: Float) {
         internalTimer += delta
-        directionDt(this, internalTimer)
-        previousPosition.set(internalPosition)
+        directionDt?.let {
+            it.invoke(this, internalTimer, delta)
+            previousPosition.set(internalPosition)
+        }
         internalPosition.mulAdd(direction, delta)
         setPosition(
             (internalPosition.x - width / 2f).toInt().toFloat(),
