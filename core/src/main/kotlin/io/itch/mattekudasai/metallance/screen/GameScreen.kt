@@ -27,7 +27,8 @@ import ktx.graphics.use
 import kotlin.math.abs
 import kotlin.math.sign
 
-class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Disposing by Self() {
+class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: Int, stage: Int) -> Unit, private val setTint: (Color) -> Unit) : KtxScreen,
+    KtxInputAdapter, Disposing by Self() {
 
     private val flagship: Flagship by remember {
         Flagship(
@@ -38,8 +39,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         )
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
-    private val whiteShapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.WHITE } }
-    private val filledShapeRenderer: ShapeRenderer by remember { ShapeRenderer().apply { color = Color.BLACK } }
+    private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer() }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
     private val shots = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
@@ -55,8 +55,41 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
     private val enemyShotTexture: Texture by remember { Texture("texture/bullet/wave.png".overridable) }
     private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
 
+    private var renderBackground: () -> Unit = {}
+
     private val level = Level(
         scriptFile = "levels/tutorial.txt".overridable,
+        setBackground = {
+            renderBackground = when (it) {
+                "simulation" -> {
+                    {
+                        shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+                            for (i in 0..1) {
+                                val density = 8 - i * 3
+                                val netWidth = viewport.worldWidth / density
+                                val netHeight = viewport.worldHeight / density
+                                val xOffset =
+                                    netWidth - (((totalGameTime * (i + 1).toFloat()) * 20f + flagship.internalPosition.x * (i + 1).toFloat() * 0.025f) % netWidth)
+                                val yOffset =
+                                    netHeight - (flagship.internalPosition.y * (i + 1).toFloat() * 0.125f) % netHeight
+                                for (j in 0..density step 2) {
+                                    val x = xOffset + j * netWidth
+                                    val y = yOffset + j * netHeight
+                                    renderer.color = Color.WHITE.cpy().mul(1f / (128f - i * 100f))
+                                    renderer.rect(x, -1f, netWidth, viewport.worldHeight + 2f)
+                                    renderer.rect(-1f, y, viewport.worldWidth + 2f, netHeight)
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+                else -> {
+                    { }
+                }
+            }
+        },
         showText = {
             delayedTextDrawer.startDrawing(
                 it.text,
@@ -79,7 +112,9 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
                 shot = ::spawnHomingEnemyShot
             )
         },
-        endSequence = {}
+        endSequence = {},
+        setRenderMode = setRenderMode,
+        setTint = setTint
     )
 
     val textDrawer: MonoSpaceTextDrawer by remember {
@@ -182,7 +217,11 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         }
     }
 
-    private fun spawnHomingEnemyShot(enemy: Enemy, maxAngularSpeed: Float = 100f, isAvailableAt: (time: Float) -> Boolean = { true }) {
+    private fun spawnHomingEnemyShot(
+        enemy: Enemy,
+        maxAngularSpeed: Float = 0f,
+        isAvailableAt: (time: Float) -> Boolean = { false }
+    ) {
         enemyShots += Shot(
             enemy.internalPosition.cpy(),
             initialDirection = Vector2(
@@ -206,6 +245,7 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
 
     private inline fun minAbs(a: Float, b: Float) =
         if (abs(a) > abs(b)) b else a
+
     private inline fun maxAbs(a: Float, b: Float) =
         if (abs(a) > abs(b)) a else b
 
@@ -336,16 +376,17 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
         }
 
         viewport.apply(true)
+        renderBackground()
         batch.use(camera) { batch ->
             enemyShots.forEach { it.draw(batch) }
         }
         if (bombs.isNotEmpty()) {
-            filledShapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) { renderer ->
+            shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+                renderer.color = Color.BLACK
                 bombs.forEach {
                     renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
                 }
-            }
-            whiteShapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+                renderer.color = Color.WHITE
                 bombs.forEach {
                     renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
                 }
@@ -362,7 +403,8 @@ class GameScreen(playMusic: Boolean = true) : KtxScreen, KtxInputAdapter, Dispos
             }
             delayedTextDrawer.updateAndDraw(delta, batch)
         }
-        whiteShapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
+        shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
+            it.color = Color.WHITE
             it.rect(0.5f, 0.5f, viewport.worldWidth - 1f, viewport.worldHeight - 1f)
         }
     }

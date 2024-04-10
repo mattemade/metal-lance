@@ -10,12 +10,23 @@ import ktx.app.KtxGame
 import ktx.app.KtxScreen
 
 class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
+
     override fun create() {
         // TODO: switch to LOG_NONE
         Gdx.app.logLevel = Application.LOG_DEBUG
         // TODO: showIntro() instead
         if (true) {
-            switchToScreen(GameScreen(playMusic = false))
+            switchToScreen(
+                GameScreen(
+                    playMusic = false,
+                    setRenderMode = { mode, stage ->
+                        getScreen<PixelPerfectScreen>().updateScreenMode(mode, stage)
+                    },
+                    setTint = { tint ->
+                        getScreen<PixelPerfectScreen>().updateTint(tint)
+                    }
+                )
+            )
         } else {
             showIntro()
         }
@@ -30,11 +41,20 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showGameScreen() {
-        switchToScreen(GameScreen())
+        switchToScreen(
+            GameScreen(
+                setRenderMode = { mode, stage ->
+                    getScreen<PixelPerfectScreen>().updateScreenMode(mode, stage)
+                },
+                setTint = { tint ->
+                    getScreen<PixelPerfectScreen>().updateTint(tint)
+                }
+            )
+        )
     }
 
     private fun switchToScreen(screen: KtxScreen) {
-        removeScreen(shownScreen.javaClass)//?.disposeSafely()
+        removeScreen(shownScreen.javaClass)
         addScreen(
             PixelPerfectScreen(
                 screen = screen,

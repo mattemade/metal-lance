@@ -1,6 +1,7 @@
 package io.itch.mattekudasai.metallance.util.pixel
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
@@ -8,8 +9,11 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.graphics.glutils.FrameBuffer
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.badlogic.gdx.utils.viewport.Viewport
+import io.itch.mattekudasai.metallance.shader.OneBitShader
+import io.itch.mattekudasai.metallance.shader.OneBitShader.update
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import ktx.app.KtxScreen
@@ -19,7 +23,7 @@ import kotlin.math.min
 // TODO: think over these val width/height, they may need to become vars at some point with widescreen upgrade
 class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth: Float, private val virtualHeight: Float) : KtxScreen, Disposing by Self() {
 
-    private val origShaderProgram: ShaderProgram by remember { createDefaultShader() }
+    private val origShaderProgram: ShaderProgram by remember { OneBitShader.createOneBitShader() }
     private val origSpriteBatch: SpriteBatch by remember { SpriteBatch(1000, origShaderProgram) }
     private val frameBuffer: FrameBuffer by remember {
         FrameBuffer(
@@ -37,18 +41,29 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
                 setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
             }
         ).apply { flip(false, true) }
+    private var totalGameTime: Float = 0f
 
     init {
         screen.autoDisposing()
     }
 
+    fun updateScreenMode(mode: Int, stage: Int) {
+        origShaderProgram.update(renderColorMode = mode, stage = stage)
+    }
+
+    fun updateTint(tint: Color) {
+        origShaderProgram.update(tint = tint)
+    }
+
     override fun render(delta: Float) {
+        totalGameTime += delta
+        origShaderProgram.update(time = totalGameTime)
         frameBuffer.use {
             screen.render(delta)
         }
         origViewport.apply(true)
         origSpriteBatch.use(origViewport.camera) {
-            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
             it.draw(frameBufferRegion, 0f, 0f, virtualWidth, virtualHeight)
         }
@@ -80,15 +95,12 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
         origViewport.screenX = (width - viewportScreenWidth) / 2
         origViewport.screenY = (height - viewportScreenHeight) / 2
 
-        origShaderProgram.use {
-          // TODO update shader program
-        }
+        origShaderProgram.update(
+            scaleFactor = minFits.toFloat(),
+            resolution = Vector2(viewportScreenWidth.toFloat(), viewportScreenHeight.toFloat())
+        )
 
         // TODO: maybe call that in create() only once? but maybe not, since virtual size may change later
         screen.resize(virtualWidth.toInt(), virtualHeight.toInt())
     }
-
-    // TODO: do a cool shader for cool effects
-    private fun createDefaultShader(): ShaderProgram =
-        SpriteBatch.createDefaultShader()
 }

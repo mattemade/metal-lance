@@ -1,6 +1,7 @@
 package io.itch.mattekudasai.metallance.stage
 
 import com.badlogic.gdx.files.FileHandle
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.utils.Align
 import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
 import io.itch.mattekudasai.metallance.enemy.Enemy
@@ -8,8 +9,11 @@ import kotlin.math.sin
 
 class Level(
     scriptFile: FileHandle,
+    private val setBackground: (String) -> Unit,
     private val showText: (TextConfiguration) -> Unit,
     private val spawnEnemy: (EnemyConfiguration) -> Unit,
+    private val setRenderMode: (mode: Int, stage: Int) -> Unit,
+    private val setTint: (tint: Color) -> Unit,
     private val endSequence: () -> Unit,
 ) {
 
@@ -25,6 +29,9 @@ class Level(
             val split = line.split("  ")
             when (line[0]) {
                 '#' -> {}
+                'B' -> setBackground(split[1])
+                'D' -> setRenderMode(split[1].toInt(), split[2].toInt())
+                'C' -> setTint(Color(split[1].toFloat(), split[2].toFloat(), split[3].toFloat(), 1f))
                 'T' -> showText(
                     TextConfiguration(
                         text = split[1].split("\\"),
@@ -59,6 +66,7 @@ class Level(
                     },
                     initialDelay = 0f,
                 )
+                'E' -> endSequence()
             }
         }
 
