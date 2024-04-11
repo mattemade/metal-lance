@@ -24,7 +24,7 @@ W  2
 C  0.8  0.2  0.2
 W  0.1
 C  0.8  1.0  0.8
-R  3  A1  RTL  0.2  1  20  P
+R  3  A0  RTL  0.2  1  20  P
 W  4
 C  0.8  0.2  0.2
 W  0.1
@@ -39,10 +39,10 @@ W  9
 T  GOOD LUCK  0.5  0.8
 W  2
 C  0.8  0.2  0.2
-R  1  A1  RTL  0.2  2  30  P
-R  1  A1  RTL  0.4  3  50  P
-R  1  A1  RTL  0.6  4  40  P
-R  1  A1  RTL  0.8  5  20  P
+R  1  A0  RTL  0.2  2  30  P
+R  1  A0  RTL  0.4  3  50  P
+R  1  A0  RTL  0.6  4  40  P
+R  1  A0  RTL  0.8  5  20  P
 W  6
 C  0.8  1.0  0.8
 W  1

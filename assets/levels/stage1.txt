@@ -5,8 +5,9 @@ T  STAGE 1\RUINED CITY  0.5  0.8
 W  5
 T
 #R  1  A0  RTL  0.2  0  0  P
-R  1  A0  RTL  0.4  0  0  P
-R  1  A0  RTL  0.6  0  0  P
+R  2  A0  RTL  0.4  3  20  P
+W  1
+R  2  A0  RTL  0.6  4  20  P
 #R  1  A3  RTL  0.8  0  0  P
 W  3
 T  WORK IN PROGRESS...\BUT HERE ARE SOME RANDOM ALIENS  0.5  0.8

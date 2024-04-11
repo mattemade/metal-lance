@@ -37,7 +37,8 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
             startTutorial = {
                 showGameScreen(
                     GameScreen.Configuration(
-                        levelPath = "levels/tutorial.txt"
+                        levelPath = "levels/tutorial.txt",
+                        livesLeft = Int.MAX_VALUE
                     )
                 )
             },
