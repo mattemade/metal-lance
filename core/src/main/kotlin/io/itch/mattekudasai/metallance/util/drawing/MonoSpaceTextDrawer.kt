@@ -7,6 +7,7 @@ import com.badlogic.gdx.utils.Align
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.files.overridable
+import io.itch.mattekudasai.metallance.util.pixel.intFloat
 
 class MonoSpaceTextDrawer(
     fontFileName: String,
@@ -95,8 +96,8 @@ class MonoSpaceTextDrawer(
                     drawnCharacters++
                     batch.draw(
                         letters[char],
-                        lineStartX + column * (drawingLetterWidth + drawingHorizontalSpacing),
-                        startPositionY + textBoxHeight - row * (drawingLetterHeight + drawingVerticalSpacing),
+                        (lineStartX + column * (drawingLetterWidth + drawingHorizontalSpacing)).intFloat,
+                        (startPositionY + textBoxHeight - row * (drawingLetterHeight + drawingVerticalSpacing)).intFloat,
                         drawingLetterWidth,
                         drawingLetterHeight
                     )

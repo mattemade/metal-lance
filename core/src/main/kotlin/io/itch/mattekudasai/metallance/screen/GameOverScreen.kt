@@ -21,23 +21,20 @@ import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
 
-class TitleScreen(
-    val startTutorial: () -> Unit,
-    val startGame: () -> Unit
+class GameOverScreen(
+    val continueGame: () -> Unit,
+    val showTitle: () -> Unit
 ) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
-    private val metalTexture: Texture by remember { Texture("texture/title/metal.png".overridable) }
-    private val lanceTexture: Texture by remember { Texture("texture/title/lance.png".overridable) }
-    private val weaponTexture: Texture by remember { Texture("texture/title/weapon.png".overridable) }
     private val shipTexture: Texture by remember { Texture("texture/ship/normal.png".overridable) }
     private val music: Music by remember { Gdx.audio.newMusic("music/title.ogg".overridable) }
     private var musicShouldBeResumed = false
     private var internalTimer = 0f
-    private var selection = 1
-    private val menuItems = listOf("TUTORIAL", "START GAME")
+    private var selection = 0
+    private val menuItems = listOf("CONTINUE", "MAIN MENU")
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
@@ -71,9 +68,7 @@ class TitleScreen(
 
         viewport.apply(true)
         batch.use(camera) {
-            it.drawTitleTexture(weaponTexture)
-            it.drawTitleTexture(lanceTexture)
-            it.drawTitleTexture(metalTexture)
+            textDrawer.drawText(it, listOf("GAME OVER"), viewport.worldWidth / 2f, viewport.worldHeight * 0.8f, Align.top)
             val menuGoesFrom = viewport.worldHeight / 3f
             menuItems.forEachIndexed { index, item ->
                 val itemY = menuGoesFrom - index * 32f
@@ -85,16 +80,6 @@ class TitleScreen(
 
         }
         super.render(delta)
-    }
-
-    private fun SpriteBatch.drawTitleTexture(texture: Texture) {
-
-        val width = texture.width
-        val height = texture.height
-        val widthFloat = width.toFloat()
-        val heightFloat = height.toFloat()
-        draw(texture, ((viewport.worldWidth - widthFloat) / 2f).toInt().toFloat(), (viewport.worldHeight * 0.75f).toInt().toFloat(), widthFloat, heightFloat, 0, 0, width, height, false, false)
-
     }
 
     override fun resize(width: Int, height: Int) {
@@ -109,8 +94,8 @@ class TitleScreen(
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
             music.stop()
             when (selection) {
-                0 -> startTutorial()
-                1 -> startGame()
+                0 -> continueGame()
+                1 -> showTitle()
             }
         } else if (keycode.isUp) {
             selection = (selection + 1) % menuItems.size

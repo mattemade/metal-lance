@@ -3,7 +3,6 @@ package io.itch.mattekudasai.metallance.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.GlobalState.isPaused
@@ -13,13 +12,12 @@ import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
 import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
 import io.itch.mattekudasai.metallance.util.files.overridable
-import io.itch.mattekudasai.metallance.util.pixel.intFloat
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
 
-class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposing by Self() {
+class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
@@ -37,7 +35,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         )
     }
     private val delayedTextDrawer = DelayedTextDrawer(textDrawer, characterTime)
-    private val textures = images.map { Texture(it.overridable).autoDisposing() }
+    //private val textures = images.map { Texture(it.overridable).autoDisposing() }
     private val music: Music by remember { Gdx.audio.newMusic("music/intro.ogg".overridable) }
 
     private val sequence = listOf(
@@ -46,7 +44,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             if (textIndex < textArray.size) {
                 val text = textArray[textIndex++]
                 val textDelay = text.sumOf { it.length } * characterTime + 2f
-                delayedTextDrawer.startDrawing(text, viewport.worldWidth / 2f, 0f)
+                delayedTextDrawer.startDrawing(text, viewport.worldWidth / 2f, viewport.worldHeight / 2f)
                 actionIndex--
                 currentWaitTime += textDelay
             }
@@ -61,6 +59,11 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private var actionIndex = 0
     private var currentWaitTime = 0f
 
+    init {
+        music.play()
+        music.isLooping = true
+    }
+
     override fun render(delta: Float) {
         clearScreen(red = 0f, green = 0f, blue = 0f)
         if (actionIndex >= sequence.size) {
@@ -71,7 +74,6 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             music.pause()
         } else if (!music.isPlaying) {
             music.play()
-            music.isLooping = true
         }
 
         currentWaitTime -= delta
@@ -88,7 +90,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         viewport.apply(true)
         batch.use(camera) {
             if (textIndex-1 >= 0) {
-                it.draw(textures[textIndex-1], 0f.intFloat, 32f.intFloat)
+                //it.draw(textures[textIndex-1], 0f, 32f)
             }
             delayedTextDrawer.updateAndDraw(delta, batch)
         }
@@ -114,24 +116,17 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     companion object {
         private const val characterTime = 0.125f
         private val lines = """
-        20XX
+        Congratulations
 
-        Earth is invaded by alien race
-        That conquered the universe
+        You have completed this
+        incomplete game
 
-        For many years people were enslaved
-
-        In total secrecy
-        Deep underground
-
-        They put everything they had
-
-        Into creating the ultimate weapon
-        the last hope of humanity
+        Come back later once
+        it will be completed
         """.trimIndent().uppercase()
 
         private val textArray = lines.split("\n\n").map { it.split("\n") }
-        private val images = textArray.indices.map { "texture/intro/intro$it.png" }
+        //private val images = textArray.indices.map { "texture/intro/intro$it.png" }
     }
 
 }

@@ -47,8 +47,8 @@ class Flagship(
             val textureHeight = texture.height.toFloat()
             setBounds(0f, 0f, textureWidth, textureHeight)
             setPosition(
-                (state.position.x - textureWidth/2f).toInt().toFloat(),
-                (state.position.y - textureHeight/2f).toInt().toFloat()
+                state.position.x - textureWidth/2f,
+                state.position.y - textureHeight/2f
             )
             field = constrainedValue
         }

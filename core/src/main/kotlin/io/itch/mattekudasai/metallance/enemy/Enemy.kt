@@ -26,8 +26,8 @@ class Enemy(
             internalTimer += delta
             updatePositionDt(internalTimer)
             setPosition(
-                (internalPosition.x - width / 2f).toInt().toFloat(),
-                (internalPosition.y - height / 2f).toInt().toFloat()
+                internalPosition.x - width / 2f,
+                internalPosition.y - height / 2f
             )
             shootingRepeater.update(delta)
         } else {

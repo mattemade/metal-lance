@@ -4,8 +4,10 @@ import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputProcessor
 import io.itch.mattekudasai.metallance.screen.AutoPausingScreen
+import io.itch.mattekudasai.metallance.screen.GameOverScreen
 import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.screen.IntroScreen
+import io.itch.mattekudasai.metallance.screen.OutroScreen
 import io.itch.mattekudasai.metallance.screen.TitleScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
@@ -64,21 +66,34 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                 },
                 returnToMainMenu = { showTitle() },
                 showGameOver = {
-                    // TODO: game over
-                    showTitle()
+                    showGameOver(it)
                 },
                 advance = {
                     when (it.levelPath) {
                         "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
                         "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
-                        "levels/stage3.txt" -> {
-                            // TODO: ending
-                            showTitle()
-                        }
+                        "levels/stage3.txt" -> showOutro()
                     }
                 }
             )
         )
+    }
+
+    private fun showGameOver(configuration: GameScreen.Configuration) {
+        switchToScreen(GameOverScreen(
+            continueGame = {
+                showGameScreen(
+                    GameScreen.Configuration(
+                        levelPath = configuration.levelPath,
+                    )
+                )
+            },
+            showTitle = { showTitle() }
+        ))
+    }
+
+    private fun showOutro() {
+        switchToScreen(OutroScreen { showTitle() })
     }
 
     private fun <T> switchToScreen(screen: T) where T : KtxScreen, T : InputProcessor {

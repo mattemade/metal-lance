@@ -25,6 +25,7 @@ import io.itch.mattekudasai.metallance.util.disposing.mutableDisposableListOf
 import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
 import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
 import io.itch.mattekudasai.metallance.util.files.overridable
+import io.itch.mattekudasai.metallance.util.pixel.intFloat
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
@@ -269,7 +270,8 @@ class GameScreen(
         environmentRenderer.renderForeground(viewport, camera, totalGameTime, flagship.internalPosition)
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
             it.color = Color.WHITE
-            it.rect(0.5f, 0.5f, viewport.worldWidth - 1f, viewport.worldHeight - 1f)
+            // using 0.5f because otherwise the left bottom corner is not covered somewhy
+            it.rect(0.5f, 0.5f, (viewport.worldWidth - 1f).intFloat, (viewport.worldHeight - 1f).intFloat)
         }
     }
 
