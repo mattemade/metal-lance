@@ -70,6 +70,12 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             return
         }
 
+        if (delta == 0f) {
+            music.pause()
+        } else if (!music.isPlaying) {
+            music.play()
+        }
+
         currentWaitTime -= delta
         while (currentWaitTime < 0f && actionIndex < sequence.size) {
             val action = sequence[actionIndex++]

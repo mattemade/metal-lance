@@ -20,7 +20,7 @@ import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.graphics.use
 
-class PausableScreen<T>(private val screen: T) : KtxScreen, Disposing by Self(),
+class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self(),
     KtxInputAdapter where T : KtxScreen, T : InputProcessor {
 
 
@@ -93,17 +93,12 @@ class PausableScreen<T>(private val screen: T) : KtxScreen, Disposing by Self(),
     override fun keyDown(keycode: Int): Boolean {
         if (keycode == Keys.P) {
             isPaused = !isPaused
-        }
-        if (isPaused) {
             return true
         }
         return screen.keyDown(keycode)
     }
 
     override fun keyUp(keycode: Int): Boolean {
-        if (isPaused) {
-            return true
-        }
         return screen.keyUp(keycode)
     }
 

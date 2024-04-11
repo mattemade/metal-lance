@@ -3,9 +3,9 @@ package io.itch.mattekudasai.metallance
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputProcessor
+import io.itch.mattekudasai.metallance.screen.AutoPausingScreen
 import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.screen.IntroScreen
-import io.itch.mattekudasai.metallance.screen.PausableScreen
 import io.itch.mattekudasai.metallance.screen.TitleScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
@@ -14,11 +14,14 @@ import ktx.app.KtxScreen
 class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
 
     override fun create() {
-        // TODO: switch to LOG_NONE
-        Gdx.app.logLevel = Application.LOG_DEBUG
+        Gdx.app.logLevel = Application.LOG_NONE
         // TODO: showIntro() instead
-        if (true) {
-            showGameScreen()
+        if (false) {
+            showGameScreen(
+                GameScreen.Configuration(
+                    levelPath = "levels/stage1.txt"
+                )
+            )
         } else {
             showIntro()
         }
@@ -29,30 +32,47 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showTitle() {
-        switchToScreen(TitleScreen { showGameScreen() })
+        switchToScreen(TitleScreen(
+            startTutorial = {
+                showGameScreen(
+                    GameScreen.Configuration(
+                        levelPath = "levels/tutorial.txt"
+                    )
+                )
+            },
+            startGame = {
+                showGameScreen(
+                    GameScreen.Configuration(
+                        levelPath = "levels/stage1.txt"
+                    )
+                )
+            }
+        ))
     }
 
-    private fun showGameScreen() {
+    private fun showGameScreen(configuration: GameScreen.Configuration) {
         switchToScreen(
             GameScreen(
-                configuration = GameScreen.Configuration(
-                    levelPath = "levels/tutorial.txt"
-                ),
+                configuration = configuration,
                 setRenderMode = { mode, stage ->
                     getScreen<PixelPerfectScreen>().updateScreenMode(mode, stage)
                 },
                 setTint = { tint ->
                     getScreen<PixelPerfectScreen>().updateTint(tint)
+                },
+                returnToMainMenu = { showTitle() },
+                showGameOver = {
+                    // TODO
                 }
             )
         )
     }
 
-    private fun <T> switchToScreen(screen: T) where T: KtxScreen, T: InputProcessor {
+    private fun <T> switchToScreen(screen: T) where T : KtxScreen, T : InputProcessor {
         removeScreen(shownScreen.javaClass)
         addScreen(
             PixelPerfectScreen(
-                screen = PausableScreen(screen),
+                screen = AutoPausingScreen(screen),
                 virtualWidth = VIRTUAL_WIDTH,
                 virtualHeight = VIRTUAL_HEIGHT
             )

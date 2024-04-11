@@ -1,9 +1,7 @@
 package io.itch.mattekudasai.metallance.screen.game
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.viewport.Viewport
@@ -16,7 +14,7 @@ class SimulationEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
 
     private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer() }
     private val colors = List(2) { Color.WHITE.cpy().mul(1f / (128f - it * 100f)) }
-    private val translucentColor = Color.BLACK.cpy().mul(0.5f)
+    private val translucentColor = Color(0.1f, 0.1f, 0.1f, 0.7f)
 
     override fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
@@ -41,10 +39,12 @@ class SimulationEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
     }
 
     override fun renderForeground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {
+        val netWidth = viewport.worldWidth * 2f
+        val xOffset = netWidth - ((time * 120f) % netWidth)
         withTransparency {
             shapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) {
                 it.color = translucentColor
-                it.rect(0f, 0f, viewport.worldWidth, viewport.worldHeight)
+                it.rect(xOffset - 30f, 0f, 30f, viewport.worldHeight)
             }
         }
     }

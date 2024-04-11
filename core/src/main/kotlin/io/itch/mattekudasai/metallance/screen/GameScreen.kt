@@ -13,6 +13,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.player.Shot
+import io.itch.mattekudasai.metallance.screen.game.CityEnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.EnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.NoopEnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.SimulationEnvironmentRenderer
@@ -33,7 +34,9 @@ import kotlin.math.sign
 class GameScreen(
     private val configuration: Configuration,
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
-    private val setTint: (Color) -> Unit
+    private val setTint: (Color) -> Unit,
+    private val returnToMainMenu: () -> Unit,
+    private val showGameOver: (configuration: Configuration) -> Unit,
 ) : KtxScreen,
     KtxInputAdapter, Disposing by Self() {
 
@@ -71,6 +74,8 @@ class GameScreen(
                 "simulation" -> environmentRenderer as? SimulationEnvironmentRenderer
                     ?: SimulationEnvironmentRenderer().autoDisposing()
 
+                "city" -> environmentRenderer as? CityEnvironmentRenderer ?: CityEnvironmentRenderer().autoDisposing()
+
                 else -> NoopEnvironmentRenderer
             }
         },
@@ -96,14 +101,23 @@ class GameScreen(
                 shot = ::spawnHomingEnemyShot
             )
         },
-        endSequence = {},
+        endSequence = {
+            when (configuration.sequenceEndAction) {
+                EndAction.RETURN_TO_MENU -> returnToMainMenu()
+            }
+        },
         setRenderMode = setRenderMode,
         setTint = setTint,
-        playMusic = {
+        playMusic = { path, volume ->
             music?.stop()
-            music = Gdx.audio.newMusic(it.overridable).autoDisposing().also {
-                it.play()
-                it.isLooping = true
+            music = null
+            val file = path.overridable
+            if (file.exists()) {
+                music = Gdx.audio.newMusic(file).autoDisposing().also {
+                    it.play()
+                    it.volume = volume
+                    it.isLooping = true
+                }
             }
         }
     )
@@ -202,8 +216,8 @@ class GameScreen(
 
     private fun spawnHomingEnemyShot(
         enemy: Enemy,
-        maxAngularSpeed: Float = 0f,
-        isAvailableAt: (time: Float) -> Boolean = { false }
+        maxAngularSpeed: Float = 100f,
+        isAvailableAt: (time: Float) -> Boolean = { true }
     ) {
         enemyShots += Shot(
             enemy.internalPosition.cpy(),
@@ -215,14 +229,15 @@ class GameScreen(
                     val currentAngle = shot.direction.angleDeg()
                     val desiredRotation = flagship.internalPosition.cpy().sub(shot.internalPosition).angleDeg().let {
                         // TODO: fix a nasty bug on break between 0 and 360
-                        minAbs(it - currentAngle, it + 360f - currentAngle)
+                        minAbs(minAbs(it - currentAngle, it + 360f - currentAngle), it - 360f - currentAngle)
                     }.let {
                         minAbs(it, maxAngularSpeed * delta * sign(it))
                     }
                     shot.direction.setAngleDeg(currentAngle + desiredRotation)
                 }
             },
-            texture = enemyShotTexture
+            texture = enemyShotTexture,
+            timeToLive = 3f,
         )
     }
 
@@ -254,11 +269,19 @@ class GameScreen(
         )
     }
 
+    private val pTextures = (0..2).map { pIndex ->
+        (0..9).map { frame ->
+            Texture("texture/upgrade/animated/p${pIndex}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
+        }
+    }
+    private var currentPTexture = 0
+
     private fun spawnPowerUp(location: Vector2) {
+        currentPTexture = (currentPTexture + 1) % pTextures.size
         powerUps += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            texture = powerUpTexture,
+            textures = pTextures[currentPTexture],
             isRotating = false
         )
     }
@@ -276,7 +299,12 @@ class GameScreen(
 
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
-        if (delta > 0f) {
+        if (delta == 0f) {
+            music?.pause()
+        } else {
+            if (music?.isPlaying == false) {
+                music?.play()
+            }
             updateGameState(delta)
         }
 
@@ -341,7 +369,7 @@ class GameScreen(
         }
         enemyShots.removeAll { enemyShot ->
             enemyShot.update(delta)
-            if (!enemyShot.internalPosition.isOnScreen) {
+            if (!enemyShot.internalPosition.isOnScreen || enemyShot.internalTimer > enemyShot.timeToLive) {
                 enemyShot.deadTime -= delta
                 if (enemyShot.deadTime < 0f) {
                     return@removeAll true
@@ -423,5 +451,10 @@ class GameScreen(
 
     class Configuration(
         val levelPath: String,
+        val sequenceEndAction: EndAction = EndAction.RETURN_TO_MENU,
     )
+
+    enum class EndAction {
+        RETURN_TO_MENU
+    }
 }

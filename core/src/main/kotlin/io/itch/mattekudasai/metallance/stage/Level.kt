@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.Align
 import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import kotlin.math.sin
+import kotlin.random.Random
 
 class Level(
     scriptFile: FileHandle,
@@ -14,7 +15,7 @@ class Level(
     private val spawnEnemy: (EnemyConfiguration) -> Unit,
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
     private val setTint: (tint: Color) -> Unit,
-    private val playMusic: (assetPath: String) -> Unit,
+    private val playMusic: (assetPath: String, volume: Float) -> Unit,
     private val endSequence: () -> Unit,
 ) {
 
@@ -30,24 +31,24 @@ class Level(
             val split = line.split("  ")
             when (line[0]) {
                 '#' -> {}
-                'B' -> setBackground(split[1])
-                'D' -> setRenderMode(split[1].toInt(), split[2].toInt())
-                'M' -> playMusic(split[1])
-                'C' -> setTint(Color(split[1].toFloat(), split[2].toFloat(), split[3].toFloat(), 1f))
+                'B' -> setBackground(split.getString(1))
+                'D' -> setRenderMode(split.getInt(1), split.getInt(2))
+                'M' -> playMusic(split.getString(1), split.getFloat(2))
+                'C' -> setTint(Color(split.getFloat(1), split.getFloat(2), split.getFloat(3), 1f))
                 'T' -> showText(
                     TextConfiguration(
-                        text = split[1].split("\\"),
-                        positionX = split[2].toFloat(),
-                        positionY = split[3].toFloat()
+                        text = split.getString(1).split("\\"),
+                        positionX = split.getFloat(2),
+                        positionY = split.getFloat(3)
                     )
                 )
 
-                'W' -> waitTime += split[1].toFloat()
+                'W' -> waitTime += split.getFloat(1)
                 'R' -> repeaters += DelayedRepeater(
-                    nextDelay = { split[1].toFloat() },
+                    nextDelay = { split.getFloat(1) },
                     action = {
-                        val enemyLine = split[2]
-                        val trajectory = split[3]
+                        val enemyLine = split.getString(2)
+                        val trajectory = split.getString(3)
                         spawnEnemy(
                             EnemyConfiguration(
                                 enemyType = enemyLine[0] - 'A',
@@ -56,11 +57,11 @@ class Level(
                                     "RTL" -> Align.right
                                     else -> Align.right
                                 },
-                                alignmentFactor = split[4].toFloat(),
+                                alignmentFactor = split.getFloat(4),
                                 updatePositionDt = { time ->
                                     when (trajectory) {
                                         "RTL" -> internalPosition.set(initialPosition)
-                                            .sub(50f * time, sin(time * split[5].toFloat()) * split[6].toFloat())
+                                            .sub(50f * time, sin(time * split.getFloat(5)) * split.getFloat(6))
                                     }
                                 }
                             )
@@ -73,6 +74,34 @@ class Level(
         }
 
         repeaters.forEach { it.update(delta) }
+    }
+
+    private fun List<String>.getString(index: Int, defaultValue: String = ""): String =
+        if (index >= size) {
+            defaultValue
+        } else {
+            get(index)
+        }
+    private fun List<String>.getInt(index: Int, defaultValue: Int = 0): Int =
+        if (index >= size) {
+            defaultValue
+        } else {
+            get(index).toInt()
+        }
+
+    private fun List<String>.getFloat(index: Int, defaultValue: Float = 0f): Float =
+        if (index >= size) {
+            defaultValue
+        } else {
+            val statement = get(index)
+            if (statement[0] == 'R') {
+                val parts = statement.substring(1).split("-")
+                val from = parts.getFloat(0)
+                val to = parts.getFloat(1)
+                from + Random.nextFloat() * to
+            } else {
+                statement.toFloat()
+            }
     }
 
     class TextConfiguration(

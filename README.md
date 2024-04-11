@@ -3,8 +3,12 @@
 Game made for [1-bit jam #3](https://itch.io/jam/1-bit-jam-three/rate/2633292).
 
 Music tracks ([stage1](assets/music/stage1.ogg), [stage2](assets/music/stage2.ogg)) are made by nicole starlight:
+
 * https://nicolestarlight.itch.io/
 * https://soundcloud.com/nicolestarlight
+
+Animated assets ([power-up](assets/texture/upgrade/animated)) are made by artist who gave me permission to use them but
+didn't give permission to mention their name. Maybe one day they will reveal themselves.
 
 Planned to be a mixture of beat 'em up and bullet hell scroll shooter.
 
@@ -26,36 +30,38 @@ Licenses:
 
 ## Dev log
 
-| Day | Date       | Wkdy | MAX | Plan                                                                                                     | Spnt | Done                                                                                                                                          |
-|-----|------------|------|-----|----------------------------------------------------------------------------------------------------------|------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| 1   | 04/04/2024 | THU  | 1-2 |                                                                                                          | 1    | Conceptualized the game                                                                                                                       |
-| 2   | 05/04/2024 | FRI  | 1-2 |                                                                                                          | 1    | Explored the math of colliding function graphs a bit, decided to make everything as simple as possible (only use linear frame-time collision) |
-| 3   | 06/04/2024 | SAT  | 1-2 | Init repo, create the plan                                                                               | 2    | As planned + basic playable character + shooting                                                                                              |
-| 4   | 07/04/2024 | SUN  | 4-6 | Basic shmup character and controls (move, shoot, bomb, shield), basic moving enemy                       | 2    | Fixed shooting, enemies that shoots back at controllable trajectory                                                                           |
-| 5   | 08/04/2024 | MON  | 4-6 | Character shoots, enemy shoots bullets (t -> vec2), collisions, upgrades                                 | 3    | Basic collision checks, some refactorings, power ups, death and bombs                                                                         |
-| 6   | 09/04/2024 | TUE  | 4-6 | Start screen, intro sequence (add some story), shape and shot upgrades                                   | 3    | Changing plans, create artist's build with overridable resources, added dummy intro and title screens, ship shape upgrades, organized assets  |
-| 7   | 10/04/2024 | WED  | 4-6 | First stage of ruined city, enemy shooting patterns, enemy scheduling                                    | 5    | Level scripting, tutorial sequence, some refactorings, runtime render mode via shader                                                         |
-| 8   | 11/04/2024 | THU  | 4-6 | Finish the scheduling engine (add enemies and shooting patterns, template moving patterns), lance strike | 2    | Pause and auto-pause, music playback from level script, music for stages 1 and 2, refactorings                                                |
-| 9   | 12/04/2024 | FRI  | 4-6 | Layout enemy schedule on all three stages, shot upgrades (rocket, bomb) ??                               |      |                                                                                                                                               |
-| 10  | 13/04/2024 | SAT  | 4-6 | 1-st and 2-nd stage bosses                                                                               |      |                                                                                                                                               |
-| 11  | 14/04/2024 | SUN  | 4-6 | Final boss                                                                                               |      |                                                                                                                                               |
-| 12  | 15/04/2024 | MON  | 1-2 | Final boss                                                                                               |      |                                                                                                                                               |
-| 13  | 16/04/2024 | TUE  | 1-2 | Formation upgrades (more controllable ships in fleet)?, widescreen upgrade                               |      |                                                                                                                                               |
-| 14  | 17/04/2024 | WED  | 1-2 | Sound effects                                                                                            |      |                                                                                                                                               |
-| 15  | 18/04/2024 | THU  | 1-2 | Sound effects                                                                                            |      |                                                                                                                                               |
-| 16  | 19/04/2024 | FRI  | 1-2 | Extra day of something                                                                                   |      |                                                                                                                                               |
-| 17  | 20/04/2024 | SAT  | 1-2 | Final touches, submission at 16:00                                                                       |      |                                                                                                                                               |
+| Day | Date       | Wkdy | MAX | Plan                                                                                                     | Spnt | Done                                                                                                                                                                                       |
+|-----|------------|------|-----|----------------------------------------------------------------------------------------------------------|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1   | 04/04/2024 | THU  | 1-2 |                                                                                                          | 1    | Conceptualized the game                                                                                                                                                                    |
+| 2   | 05/04/2024 | FRI  | 1-2 |                                                                                                          | 1    | Explored the math of colliding function graphs a bit, decided to make everything as simple as possible (only use linear frame-time collision)                                              |
+| 3   | 06/04/2024 | SAT  | 1-2 | Init repo, create the plan                                                                               | 2    | As planned + basic playable character + shooting                                                                                                                                           |
+| 4   | 07/04/2024 | SUN  | 4-6 | Basic shmup character and controls (move, shoot, bomb, shield), basic moving enemy                       | 2    | Fixed shooting, enemies that shoots back at controllable trajectory                                                                                                                        |
+| 5   | 08/04/2024 | MON  | 4-6 | Character shoots, enemy shoots bullets (t -> vec2), collisions, upgrades                                 | 3    | Basic collision checks, some refactorings, power ups, death and bombs                                                                                                                      |
+| 6   | 09/04/2024 | TUE  | 4-6 | Start screen, intro sequence (add some story), shape and shot upgrades                                   | 3    | Changing plans, create artist's build with overridable resources, added dummy intro and title screens, ship shape upgrades, organized assets                                               |
+| 7   | 10/04/2024 | WED  | 4-6 | First stage of ruined city, enemy shooting patterns, enemy scheduling                                    | 5    | Level scripting, tutorial sequence, some refactorings, runtime render mode via shader                                                                                                      |
+| 8   | 11/04/2024 | THU  | 4-6 | Finish the scheduling engine (add enemies and shooting patterns, template moving patterns), lance strike | 5    | Pause and auto-pause, music playback from level script, music for stages 1 and 2, refactorings, testing animated upgrades, refined tutorial and start screens, added some city environment |
+| 9   | 12/04/2024 | FRI  | 4-6 | Layout enemy schedule on all three stages, shot upgrades (rocket, bomb) ??                               |      |                                                                                                                                                                                            |
+| 10  | 13/04/2024 | SAT  | 4-6 | 1-st and 2-nd stage bosses                                                                               |      |                                                                                                                                                                                            |
+| 11  | 14/04/2024 | SUN  | 4-6 | Final boss                                                                                               |      |                                                                                                                                                                                            |
+| 12  | 15/04/2024 | MON  | 1-2 | Final boss                                                                                               |      |                                                                                                                                                                                            |
+| 13  | 16/04/2024 | TUE  | 1-2 | Formation upgrades (more controllable ships in fleet)?, widescreen upgrade                               |      |                                                                                                                                                                                            |
+| 14  | 17/04/2024 | WED  | 1-2 | Sound effects                                                                                            |      |                                                                                                                                                                                            |
+| 15  | 18/04/2024 | THU  | 1-2 | Sound effects                                                                                            |      |                                                                                                                                                                                            |
+| 16  | 19/04/2024 | FRI  | 1-2 | Extra day of something                                                                                   |      |                                                                                                                                                                                            |
+| 17  | 20/04/2024 | SAT  | 1-2 | Final touches, submission at 16:00                                                                       |      |                                                                                                                                                                                            |
 
 ## Behind the schedule
+
 * HUD
-  * Body modificator: normal (one-shot), metal (health bar)
-  * Cannon modificator: lance, (charge bar)
-  * Shot modificator: blaster, rocket, bomb
+    * Body modificator: normal (one-shot), metal (health bar)
+    * Cannon modificator: lance, (charge bar)
+    * Shot modificator: blaster, rocket, bomb
 * functional title screen
 * game over/continue screen
-  * very similar to the title screen
+    * very similar to the title screen
 * outro
-  * intro-like slideshow? should be simple, maybe just extend the intro with a different sequence (or even use the level sequencer for both)
+    * intro-like slideshow? should be simple, maybe just extend the intro with a different sequence (or even use the
+      level sequencer for both)
 
 Next section was generated by [gdx-liftoff](https://github.com/libgdx/gdx-liftoff), leaving it as is since it has some
 useful stuff.
