@@ -58,6 +58,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private var textIndex = 0
     private var actionIndex = 0
     private var currentWaitTime = 0f
+    private var ignoringInputFor = 1f
 
     init {
         music.play()
@@ -66,6 +67,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
 
     override fun render(delta: Float) {
         clearScreen(red = 0f, green = 0f, blue = 0f)
+        ignoringInputFor -= delta
         if (actionIndex >= sequence.size) {
             return
         }
@@ -103,7 +105,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     }
 
     override fun keyDown(keycode: Int): Boolean {
-        if (isPaused) {
+        if (isPaused || ignoringInputFor > 0f) {
             return false
         }
         if (keycode.isAnyKey) {
