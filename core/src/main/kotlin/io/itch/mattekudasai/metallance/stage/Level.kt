@@ -16,6 +16,7 @@ class Level(
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
     private val setTint: (tint: Color) -> Unit,
     private val playMusic: (assetPath: String, volume: Float) -> Unit,
+    private val winningCondition: (condition: String, counter: Int) -> Unit,
     private val endSequence: () -> Unit,
 ) {
 
@@ -31,6 +32,7 @@ class Level(
             val split = line.split("  ")
             when (line[0]) {
                 '#' -> {}
+                'N' -> winningCondition(split.getString(1), split.getInt(2))
                 'B' -> setBackground(split.getString(1))
                 'D' -> setRenderMode(split.getInt(1), split.getInt(2))
                 'M' -> playMusic(split.getString(1), split.getFloat(2))

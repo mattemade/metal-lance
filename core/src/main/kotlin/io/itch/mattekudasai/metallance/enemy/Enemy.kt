@@ -9,7 +9,8 @@ class Enemy(
     private val explosionTexture: Texture,
     val initialPosition: Vector2,
     private val updatePositionDt: Enemy.(t: Float) -> Unit = { },
-    nextShootingDelay: () -> Float,
+    nextShootingDelay: (time: Float) -> Float,
+    initialShootingDelay: Float = nextShootingDelay(0f),
     private val shot: (Enemy) -> Unit,
 ) : SimpleSprite(texture) {
 
@@ -18,7 +19,7 @@ class Enemy(
         private set
     var isAlive = true
         private set
-    private var shootingRepeater = DelayedRepeater(nextShootingDelay) { shot(this) }
+    private var shootingRepeater = DelayedRepeater(nextShootingDelay, initialShootingDelay) { shot(this) }
 
     fun update(delta: Float) {
         if (isAlive) {

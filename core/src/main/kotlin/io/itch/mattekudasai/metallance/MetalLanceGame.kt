@@ -14,7 +14,8 @@ import ktx.app.KtxScreen
 class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame disposes all the screens itself */ {
 
     override fun create() {
-        Gdx.app.logLevel = Application.LOG_NONE
+        // TODO: set to LOG_NONE
+        Gdx.app.logLevel = Application.LOG_DEBUG
         // TODO: showIntro() instead
         if (false) {
             showGameScreen(
@@ -62,7 +63,18 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                 },
                 returnToMainMenu = { showTitle() },
                 showGameOver = {
-                    // TODO
+                    // TODO: game over
+                    showTitle()
+                },
+                advance = {
+                    when (it.levelPath) {
+                        "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
+                        "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
+                        "levels/stage3.txt" -> {
+                            // TODO: ending
+                            showTitle()
+                        }
+                    }
                 }
             )
         )

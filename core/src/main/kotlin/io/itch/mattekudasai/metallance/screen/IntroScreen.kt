@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
+import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isAnyKey
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
@@ -103,6 +104,9 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     }
 
     override fun keyDown(keycode: Int): Boolean {
+        if (isPaused) {
+            return false
+        }
         if (keycode.isAnyKey) {
             music.stop()
             finish()

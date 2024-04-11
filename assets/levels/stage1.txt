@@ -1,13 +1,17 @@
 B  city
+N  kill  20
 M  music/stage1.ogg  0.1
 T  STAGE 1\RUINED CITY  0.5  0.8
 W  5
 T
-R  1  A1  RTL  R0.2-0.8  2  30  P
-R  1  A1  RTL  R0.2-0.8  3  50  P
-R  1  A1  RTL  R0.2-0.8  4  40  P
+#R  1  A0  RTL  0.2  0  0  P
+R  1  A0  RTL  0.4  0  0  P
+R  1  A0  RTL  0.6  0  0  P
+#R  1  A3  RTL  0.8  0  0  P
 W  3
 T  WORK IN PROGRESS...\BUT HERE ARE SOME RANDOM ALIENS  0.5  0.8
+W  9
+T  DEFEAT 20 OF THEM TO\ADVANCE TO THE NEXT LEVEL  0.5  0.8
 W  9
 T
 #W  1

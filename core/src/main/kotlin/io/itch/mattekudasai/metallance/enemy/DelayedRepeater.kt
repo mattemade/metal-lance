@@ -1,8 +1,8 @@
 package io.itch.mattekudasai.metallance.enemy
 
 class DelayedRepeater(
-    private val nextDelay: () -> Float,
-    initialDelay: Float = nextDelay(),
+    private val nextDelay: (time: Float) -> Float,
+    initialDelay: Float = nextDelay(0f),
     private val action: () -> Unit,
 ) {
     private var internalTimer = 0f
@@ -13,7 +13,7 @@ class DelayedRepeater(
         while (internalTimer >= currentDelay) {
             action()
             internalTimer -= currentDelay
-            currentDelay = nextDelay()
+            currentDelay = nextDelay(internalTimer)
         }
     }
 

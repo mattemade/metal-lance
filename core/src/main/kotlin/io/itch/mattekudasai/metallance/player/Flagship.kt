@@ -22,6 +22,9 @@ class Flagship(
     private val worldWidth: Float,
     private val worldHeight: Float,
     private val explosionTexture: Texture,
+    private val initialLivesLeft: Int,
+    private val initialPower: Float,
+    private val initialShipType: Int,
     private val shot: (shipType: Int) -> Unit
 ) : SimpleSprite("texture/ship/normal.png"), KtxInputAdapter {
 
@@ -36,8 +39,8 @@ class Flagship(
         Texture("texture/ship/quadriple.png".overridable).autoDisposing(),
         Texture("texture/ship/quintiple.png".overridable).autoDisposing(),
     )
-    private var shipType = 0
-        set(value) {
+    var shipType: Int = 0
+        private set(value) {
             val constrainedValue = min(shipTextures.size - 1, value)
             texture = shipTextures[constrainedValue]
             val textureWidth = texture.width.toFloat()
@@ -50,7 +53,11 @@ class Flagship(
             field = constrainedValue
         }
 
-    private var shootingRate = SHOOTING_RATE
+    var lives = initialLivesLeft
+    var power: Float = initialPower // 0 to 1
+        private set
+    private val shootingCooldown: Float
+        get() = (1f - power*0.9f) * SHOOTING_COOLDOWN
     var isAlive = true
       private set
 
@@ -58,6 +65,10 @@ class Flagship(
         get() = isAlive && timeToStartOver > 0f
 
     var slowingTransition: Float = 0f
+
+    init {
+        shipType = initialShipType
+    }
 
     override fun keyDown(keycode: Int): Boolean {
         with(state) {
@@ -94,12 +105,16 @@ class Flagship(
 
     fun update(delta: Float) {
         timeToStartOver -= delta
+        val halfWidth = width / 2f
+        val halfHeight = height / 2f
         if (!isAlive) {
-            if (timeToStartOver > 0f) {
-                return
-            }
-            startOver()
-            // not returning!
+            movingTo.set(-Shot.SPEED_SLOW*delta, 0f)
+            state.position.add(movingTo)
+            setPosition(
+                (state.position.x - halfWidth).toInt().toFloat(),
+                (state.position.y - halfHeight).toInt().toFloat()
+            )
+            return
         }
         movingTo.set(
             delta * horizontalSpeedMap[state.flyingForward]!![state.flyingBackward]!!,
@@ -116,11 +131,8 @@ class Flagship(
         } else if (slowingTransition > 0f) {
             slowingTransition = max(0f, slowingTransition - delta / SLOWING_TRANSITION_TIME)
         }
-        state.position.add(movingTo)
 
 
-        val halfWidth = width / 2f
-        val halfHeight = height / 2f
         with(state.position) {
             add(movingTo)
             if (x < halfWidth) {
@@ -139,7 +151,7 @@ class Flagship(
             (state.position.y - halfHeight).toInt().toFloat()
         )
 
-        if (state.timeFromLastShot > shootingRate && state.shooting) {
+        if (state.timeFromLastShot > shootingCooldown && state.shooting) {
             state.timeFromLastShot = 0f
             shot(shipType)
         }
@@ -149,10 +161,10 @@ class Flagship(
     }
 
     fun powerUp() {
-        shootingRate = max(0.1f, shootingRate * 0.66f)
-        if (shootingRate == 0.1f && shipType < shipTextures.size - 1) {
+        power = min(1f, power + 1f / ((shipType + 1) * 5f))
+        if (power == 1f && shipType < shipTextures.size - 1) {
             transform()
-            shootingRate = SHOOTING_RATE
+            power = 0f
         }
     }
 
@@ -161,7 +173,7 @@ class Flagship(
     }
 
     // TODO: maybe reuse is for game over?
-    fun explode() {
+    private fun explode() {
         isAlive = false
         texture = explosionTexture
         setBounds(0f, 0f, explosionTexture.width.toFloat(), explosionTexture.height.toFloat())
@@ -169,21 +181,26 @@ class Flagship(
         timeToStartOver = 1f
     }
 
-    fun startOver() {
+    fun startOver(): Boolean {
+        if (--lives < 0) {
+            explode()
+            return false
+        }
         isAlive = true
         shipType = 0
         timeToStartOver = 2f
         //state.position.set(40f, worldHeight / 2f)
-        shootingRate = SHOOTING_RATE
+        power = 0f
+        return true
     }
 
     companion object {
-        const val SPEED_LIMIT = 100f
+        const val SPEED_LIMIT = 200f
         const val HORIZONTAL_SPEED = SPEED_LIMIT
         const val VERTICAL_SPEED = SPEED_LIMIT * 0.66f
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)
         const val SLOWING_FACTOR = 0.5f
-        const val SHOOTING_RATE = 0.5f
+        const val SHOOTING_COOLDOWN = 0.5f
         const val SLOWING_TRANSITION_TIME = 0.125f
 
         private val horizontalSpeedMap = mapOf(

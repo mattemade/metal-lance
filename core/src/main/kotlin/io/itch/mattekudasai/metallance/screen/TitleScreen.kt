@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.FitViewport
+import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isDown
 import io.itch.mattekudasai.metallance.player.Controls.isShoot
 import io.itch.mattekudasai.metallance.player.Controls.isUp
@@ -92,6 +93,9 @@ class TitleScreen(
     }
 
     override fun keyDown(keycode: Int): Boolean {
+        if (isPaused) {
+            return false
+        }
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
             music.stop()
             when (selection) {

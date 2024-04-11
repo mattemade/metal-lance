@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.enemy.Enemy
+import io.itch.mattekudasai.metallance.enemy.ShootingPattern.Companion.toPattern
 import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.player.Shot
 import io.itch.mattekudasai.metallance.screen.game.CityEnvironmentRenderer
@@ -28,8 +29,6 @@ import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
-import kotlin.math.abs
-import kotlin.math.sign
 
 class GameScreen(
     private val configuration: Configuration,
@@ -37,6 +36,7 @@ class GameScreen(
     private val setTint: (Color) -> Unit,
     private val returnToMainMenu: () -> Unit,
     private val showGameOver: (configuration: Configuration) -> Unit,
+    private val advance: (configuration: Configuration) -> Unit,
 ) : KtxScreen,
     KtxInputAdapter, Disposing by Self() {
 
@@ -45,6 +45,9 @@ class GameScreen(
             viewport.worldWidth,
             viewport.worldHeight,
             explosionTexture,
+            configuration.livesLeft,
+            configuration.power,
+            configuration.shipType,
             ::shoot
         )
     }
@@ -60,12 +63,23 @@ class GameScreen(
 
     // TODO: pack all the textures in one 2048x2048 atlas to avoid constant rebinding
     private val shotTexture: Texture by remember { Texture("texture/bullet/shot.png".overridable) }
-    private val enemyTexture: Texture by remember { Texture("texture/saucer.png".overridable) }
+    private val enemyTextures = listOf("texture/saucer.png").map {
+        Texture(it.overridable).autoDisposing()
+    }
     private val explosionTexture: Texture by remember { Texture("texture/explosion.png".overridable) }
-    private val enemyShotTexture: Texture by remember { Texture("texture/bullet/wave.png".overridable) }
-    private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
-
+    private val enemyShotTextures = listOf("texture/bullet/wave.png").map {
+        Texture(it.overridable).autoDisposing()
+    }
+    //private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
+    private val powerUpTextures = (0..2).map { pIndex ->
+        (0..9).map { frame ->
+            Texture("texture/upgrade/animated/p${pIndex}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
+        }
+    }
+    private var currentPTexture = 0
     private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
+    private var defeatToWin: Int = Integer.MAX_VALUE
+    private var gameOverTimer: Float = 0f
 
     private val level = Level(
         scriptFile = configuration.levelPath.overridable,
@@ -86,24 +100,33 @@ class GameScreen(
                 it.positionY * viewport.worldHeight
             )
         },
-        spawnEnemy = {
+        spawnEnemy = { enemyConfiguration ->
             val initialPosition = Vector2()
-            if (Align.isRight(it.alignment)) {
-                initialPosition.set(viewport.worldWidth + 8f, it.alignmentFactor * viewport.worldHeight)
+            if (Align.isRight(enemyConfiguration.alignment)) {
+                initialPosition.set(viewport.worldWidth + 8f, enemyConfiguration.alignmentFactor * viewport.worldHeight)
             }
-            // TODO: nextShootingDelay and shot should be set from pattern
+            val pattern = enemyConfiguration.shootingPattern.toPattern()
             enemies += Enemy(
-                texture = enemyTexture,
+                texture = enemyTextures[enemyConfiguration.enemyType],
                 explosionTexture = explosionTexture,
                 initialPosition = initialPosition,
-                updatePositionDt = it.updatePositionDt,
-                nextShootingDelay = { 2f },
-                shot = ::spawnHomingEnemyShot
+                updatePositionDt = enemyConfiguration.updatePositionDt,
+                initialShootingDelay = pattern.initialDelay,
+                nextShootingDelay = pattern.nextDelay,
+                shot = { enemyShots += pattern.onShoot(it, flagship.internalPosition, enemyShotTextures[pattern.shotTextureIndex]) }
             )
+        },
+        winningCondition = { condition, counter ->
+            when (condition) {
+                "kill" -> defeatToWin = counter
+            }
         },
         endSequence = {
             when (configuration.sequenceEndAction) {
-                EndAction.RETURN_TO_MENU -> returnToMainMenu()
+                EndAction.RETURN_TO_MENU -> {
+                    music?.stop()
+                    returnToMainMenu()
+                }
             }
         },
         setRenderMode = setRenderMode,
@@ -176,112 +199,14 @@ class GameScreen(
                 spawnShot(-2f, slowingOffset / 2f, shortAngle)
             }
         }
-
     }
-
-    private fun spawnSunEnemyShot(enemy: Enemy) {
-        val step = when {
-            enemy.internalTimer < 1f -> 90
-            enemy.internalTimer < 2.5f -> 45
-            enemy.internalTimer < 4f -> 30
-            else -> 15
-        }
-        val speedFactor = when {
-            enemy.internalTimer < 1f -> 0.5f
-            enemy.internalTimer < 2.5f -> 0.75f
-            enemy.internalTimer < 4f -> 1f
-            else -> 1.25f
-        }
-        for (angle in 0..360 step step) {
-            var wasSet = false
-            var wasHomed = false
-            enemyShots += Shot(
-                enemy.internalPosition.cpy(),
-                { shot, time, delta ->
-                    if (!wasSet) {
-                        wasSet = true
-                        shot.direction.set(Shot.SPEED_SLOW * speedFactor, 0f).rotateDeg(angle.toFloat())
-                    }
-                    if (!wasHomed && time > (0.5f / speedFactor)) {
-                        wasHomed = true
-                        shot.direction
-                            .set(flagship.internalPosition.cpy().sub(shot.internalPosition))
-                            .setLength(Shot.SPEED_SLOW * speedFactor)
-                    }
-                },
-                enemyShotTexture
-            )
-        }
-    }
-
-    private fun spawnHomingEnemyShot(
-        enemy: Enemy,
-        maxAngularSpeed: Float = 100f,
-        isAvailableAt: (time: Float) -> Boolean = { true }
-    ) {
-        enemyShots += Shot(
-            enemy.internalPosition.cpy(),
-            initialDirection = Vector2(
-                flagship.internalPosition.cpy().sub(enemy.internalPosition)
-            ).setLength(Shot.SPEED_SLOW),
-            directionDt = { shot, time, delta ->
-                if (isAvailableAt(time)) {
-                    val currentAngle = shot.direction.angleDeg()
-                    val desiredRotation = flagship.internalPosition.cpy().sub(shot.internalPosition).angleDeg().let {
-                        // TODO: fix a nasty bug on break between 0 and 360
-                        minAbs(minAbs(it - currentAngle, it + 360f - currentAngle), it - 360f - currentAngle)
-                    }.let {
-                        minAbs(it, maxAngularSpeed * delta * sign(it))
-                    }
-                    shot.direction.setAngleDeg(currentAngle + desiredRotation)
-                }
-            },
-            texture = enemyShotTexture,
-            timeToLive = 3f,
-        )
-    }
-
-    private inline fun minAbs(a: Float, b: Float) =
-        if (abs(a) > abs(b)) b else a
-
-    private inline fun maxAbs(a: Float, b: Float) =
-        if (abs(a) > abs(b)) a else b
-
-    private fun spawnStandardEnemyShot(enemy: Enemy) {
-        val isStraight = totalGameTime < 20f
-        val isHoming = totalGameTime > 40f//Random.nextBoolean()
-        var wasSetOnce = false
-        enemyShots += Shot(
-            enemy.internalPosition.cpy(),
-            { shot, time, delta ->
-                if ((isHoming && time < 1f) || !wasSetOnce) {
-                    wasSetOnce = true
-                    if (isStraight) {
-                        shot.direction.set(-Shot.SPEED_SLOW, 0f)
-                    } else {
-                        shot.direction
-                            .set(flagship.internalPosition.cpy().sub(shot.internalPosition))
-                            .setLength(Shot.SPEED_SLOW)
-                    }
-                }
-            },
-            enemyShotTexture
-        )
-    }
-
-    private val pTextures = (0..2).map { pIndex ->
-        (0..9).map { frame ->
-            Texture("texture/upgrade/animated/p${pIndex}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
-        }
-    }
-    private var currentPTexture = 0
 
     private fun spawnPowerUp(location: Vector2) {
-        currentPTexture = (currentPTexture + 1) % pTextures.size
+        currentPTexture = (currentPTexture + 1) % powerUpTextures.size
         powerUps += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            textures = pTextures[currentPTexture],
+            textures = powerUpTextures[currentPTexture],
             isRotating = false
         )
     }
@@ -383,13 +308,16 @@ class GameScreen(
             // flagship collision check
             val flagshipHit = !flagship.isInvincible && flagship.collides(enemyShot, 3f, 1.5f)
             if (flagshipHit) {
-                bombs += Shot(
-                    flagship.internalPosition.cpy(),
-                    { _, _, _ -> },
-                    explosionTexture,
-                    isRotating = false
-                )
-                flagship.startOver()
+                if (flagship.startOver()) {
+                    bombs += Shot(
+                        flagship.internalPosition.cpy(),
+                        { _, _, _ -> },
+                        explosionTexture,
+                        isRotating = false
+                    )
+                } else {
+                    gameOverTimer = 2f
+                }
             }
             flagshipHit
         }
@@ -409,6 +337,17 @@ class GameScreen(
                     removeShot = true
                     enemy.explode()
                     spawnPowerUp(enemy.internalPosition)
+                    defeatToWin -= 1
+                    if (defeatToWin == 0) {
+                        music?.stop()
+                        advance(
+                            configuration.copy(
+                                livesLeft = flagship.lives,
+                                power = flagship.power,
+                                shipType = flagship.shipType,
+                            )
+                        )
+                    }
                     break
                 }
             }
@@ -430,6 +369,15 @@ class GameScreen(
             bomb.update(delta)
             bomb.internalTimer * 200f > viewport.worldHeight * 1.27f
         }
+
+        if (!flagship.isAlive) {
+            if (gameOverTimer > 0f) {
+                gameOverTimer -= delta
+            } else {
+                music?.stop()
+                showGameOver(configuration)
+            }
+        }
     }
 
     fun Flagship.collides(item: Shot, rearDistance: Float, frontDistance: Float): Boolean {
@@ -449,9 +397,12 @@ class GameScreen(
         return flagship.keyUp(keycode)
     }
 
-    class Configuration(
+    data class Configuration(
         val levelPath: String,
         val sequenceEndAction: EndAction = EndAction.RETURN_TO_MENU,
+        var livesLeft: Int = 3,
+        var power: Float = 0f,
+        var shipType: Int = 0,
     )
 
     enum class EndAction {
