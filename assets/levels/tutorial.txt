@@ -1,4 +1,5 @@
 B  simulation
+M  music/stage1.ogg
 D  4  0
 C  0.8  1.0  0.8
 W  1

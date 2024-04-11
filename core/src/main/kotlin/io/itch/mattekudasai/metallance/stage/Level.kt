@@ -14,6 +14,7 @@ class Level(
     private val spawnEnemy: (EnemyConfiguration) -> Unit,
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
     private val setTint: (tint: Color) -> Unit,
+    private val playMusic: (assetPath: String) -> Unit,
     private val endSequence: () -> Unit,
 ) {
 
@@ -31,6 +32,7 @@ class Level(
                 '#' -> {}
                 'B' -> setBackground(split[1])
                 'D' -> setRenderMode(split[1].toInt(), split[2].toInt())
+                'M' -> playMusic(split[1])
                 'C' -> setTint(Color(split[1].toFloat(), split[2].toFloat(), split[3].toFloat(), 1f))
                 'T' -> showText(
                     TextConfiguration(

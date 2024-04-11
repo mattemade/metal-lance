@@ -13,6 +13,9 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.player.Shot
+import io.itch.mattekudasai.metallance.screen.game.EnvironmentRenderer
+import io.itch.mattekudasai.metallance.screen.game.NoopEnvironmentRenderer
+import io.itch.mattekudasai.metallance.screen.game.SimulationEnvironmentRenderer
 import io.itch.mattekudasai.metallance.stage.Level
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
@@ -27,7 +30,11 @@ import ktx.graphics.use
 import kotlin.math.abs
 import kotlin.math.sign
 
-class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: Int, stage: Int) -> Unit, private val setTint: (Color) -> Unit) : KtxScreen,
+class GameScreen(
+    private val configuration: Configuration,
+    private val setRenderMode: (mode: Int, stage: Int) -> Unit,
+    private val setTint: (Color) -> Unit
+) : KtxScreen,
     KtxInputAdapter, Disposing by Self() {
 
     private val flagship: Flagship by remember {
@@ -55,39 +62,16 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
     private val enemyShotTexture: Texture by remember { Texture("texture/bullet/wave.png".overridable) }
     private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
 
-    private var renderBackground: () -> Unit = {}
+    private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
 
     private val level = Level(
-        scriptFile = "levels/tutorial.txt".overridable,
+        scriptFile = configuration.levelPath.overridable,
         setBackground = {
-            renderBackground = when (it) {
-                "simulation" -> {
-                    {
-                        shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
-                            for (i in 0..1) {
-                                val density = 8 - i * 3
-                                val netWidth = viewport.worldWidth / density
-                                val netHeight = viewport.worldHeight / density
-                                val xOffset =
-                                    netWidth - (((totalGameTime * (i + 1).toFloat()) * 20f + flagship.internalPosition.x * (i + 1).toFloat() * 0.025f) % netWidth)
-                                val yOffset =
-                                    netHeight - (flagship.internalPosition.y * (i + 1).toFloat() * 0.125f) % netHeight
-                                for (j in 0..density step 2) {
-                                    val x = xOffset + j * netWidth
-                                    val y = yOffset + j * netHeight
-                                    renderer.color = Color.WHITE.cpy().mul(1f / (128f - i * 100f))
-                                    renderer.rect(x, -1f, netWidth, viewport.worldHeight + 2f)
-                                    renderer.rect(-1f, y, viewport.worldWidth + 2f, netHeight)
-                                }
-                            }
+            environmentRenderer = when (it) {
+                "simulation" -> environmentRenderer as? SimulationEnvironmentRenderer
+                    ?: SimulationEnvironmentRenderer().autoDisposing()
 
-                        }
-                    }
-                }
-
-                else -> {
-                    { }
-                }
+                else -> NoopEnvironmentRenderer
             }
         },
         showText = {
@@ -114,7 +98,14 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
         },
         endSequence = {},
         setRenderMode = setRenderMode,
-        setTint = setTint
+        setTint = setTint,
+        playMusic = {
+            music?.stop()
+            music = Gdx.audio.newMusic(it.overridable).autoDisposing().also {
+                it.play()
+                it.isLooping = true
+            }
+        }
     )
 
     val textDrawer: MonoSpaceTextDrawer by remember {
@@ -129,15 +120,7 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
         )
     }
     val delayedTextDrawer = DelayedTextDrawer(textDrawer, 0.125f)
-    private val music: Music by remember { Gdx.audio.newMusic("music/stage1.ogg".overridable) }
-
-    init {
-        Gdx.input.inputProcessor = this
-        if (playMusic) {
-            music.play()
-            music.isLooping = true
-        }
-    }
+    private var music: Music? = null
 
     private fun spawnShot(offsetX: Float = 0f, offsetY: Float = 0f, angleDeg: Float = 0f): Shot =
         Shot(
@@ -293,6 +276,51 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
 
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
+        if (delta > 0f) {
+            updateGameState(delta)
+        }
+
+        if (totalGameTime == 0f) {
+            // game never were unpaused
+            return
+        }
+
+        viewport.apply(true)
+        environmentRenderer.renderBackground(viewport, camera, totalGameTime, flagship.internalPosition)
+        batch.use(camera) { batch ->
+            enemyShots.forEach { it.draw(batch) }
+        }
+        if (bombs.isNotEmpty()) {
+            shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
+                renderer.color = Color.BLACK
+                bombs.forEach {
+                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
+                }
+                renderer.color = Color.WHITE
+                bombs.forEach {
+                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
+                }
+            }
+        }
+        batch.use(camera) { batch ->
+            /*enemyShots.forEach { it.draw(batch) }*/
+            enemies.forEach { it.draw(batch) }
+            shots.forEach { it.draw(batch) }
+            powerUps.forEach { it.draw(batch) }
+            //bombs.forEach { it.draw(batch) }
+            if (!flagship.isInvincible || evenFrame) {
+                flagship.draw(batch)
+            }
+            delayedTextDrawer.updateAndDraw(delta, batch)
+        }
+        environmentRenderer.renderForeground(viewport, camera, totalGameTime, flagship.internalPosition)
+        shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
+            it.color = Color.WHITE
+            it.rect(0.5f, 0.5f, viewport.worldWidth - 1f, viewport.worldHeight - 1f)
+        }
+    }
+
+    private fun updateGameState(delta: Float) {
         level.update(delta)
         flagship.update(delta)
         //enemySpawner.update(delta)
@@ -374,39 +402,6 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
             bomb.update(delta)
             bomb.internalTimer * 200f > viewport.worldHeight * 1.27f
         }
-
-        viewport.apply(true)
-        renderBackground()
-        batch.use(camera) { batch ->
-            enemyShots.forEach { it.draw(batch) }
-        }
-        if (bombs.isNotEmpty()) {
-            shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
-                renderer.color = Color.BLACK
-                bombs.forEach {
-                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
-                }
-                renderer.color = Color.WHITE
-                bombs.forEach {
-                    renderer.circle(it.internalPosition.x, it.internalPosition.y, it.internalTimer * 200f)
-                }
-            }
-        }
-        batch.use(camera) { batch ->
-            /*enemyShots.forEach { it.draw(batch) }*/
-            enemies.forEach { it.draw(batch) }
-            shots.forEach { it.draw(batch) }
-            powerUps.forEach { it.draw(batch) }
-            //bombs.forEach { it.draw(batch) }
-            if (!flagship.isInvincible || evenFrame) {
-                flagship.draw(batch)
-            }
-            delayedTextDrawer.updateAndDraw(delta, batch)
-        }
-        shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
-            it.color = Color.WHITE
-            it.rect(0.5f, 0.5f, viewport.worldWidth - 1f, viewport.worldHeight - 1f)
-        }
     }
 
     fun Flagship.collides(item: Shot, rearDistance: Float, frontDistance: Float): Boolean {
@@ -425,4 +420,8 @@ class GameScreen(playMusic: Boolean = true, private val setRenderMode: (mode: In
     override fun keyUp(keycode: Int): Boolean {
         return flagship.keyUp(keycode)
     }
+
+    class Configuration(
+        val levelPath: String,
+    )
 }

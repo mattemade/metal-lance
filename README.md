@@ -2,6 +2,10 @@
 
 Game made for [1-bit jam #3](https://itch.io/jam/1-bit-jam-three/rate/2633292).
 
+Music tracks ([stage1](assets/music/stage1.ogg), [stage2](assets/music/stage2.ogg)) are made by nicole starlight:
+* https://nicolestarlight.itch.io/
+* https://soundcloud.com/nicolestarlight
+
 Planned to be a mixture of beat 'em up and bullet hell scroll shooter.
 
 Jam theme is "transformation", and I am going to interpret it without any creativity in mind: the main character is a
@@ -12,7 +16,7 @@ Tools used:
 * [libGDX](https://github.com/libgdx/libgdx) with [TeaVM](https://github.com/konsoletyper/teavm) for code (all the code
   is GNU)
 * [GIMP](https://github.com/GNOME/gimp) for images
-* [LMMS](https://github.com/LMMS/lmms) for sound effects and music
+* [LMMS](https://github.com/LMMS/lmms) for sound effects
 
 Licenses:
 
@@ -31,7 +35,7 @@ Licenses:
 | 5   | 08/04/2024 | MON  | 4-6 | Character shoots, enemy shoots bullets (t -> vec2), collisions, upgrades                                 | 3    | Basic collision checks, some refactorings, power ups, death and bombs                                                                         |
 | 6   | 09/04/2024 | TUE  | 4-6 | Start screen, intro sequence (add some story), shape and shot upgrades                                   | 3    | Changing plans, create artist's build with overridable resources, added dummy intro and title screens, ship shape upgrades, organized assets  |
 | 7   | 10/04/2024 | WED  | 4-6 | First stage of ruined city, enemy shooting patterns, enemy scheduling                                    | 5    | Level scripting, tutorial sequence, some refactorings, runtime render mode via shader                                                         |
-| 8   | 11/04/2024 | THU  | 4-6 | Finish the scheduling engine (add enemies and shooting patterns, template moving patterns), lance strike |      |                                                                                                                                               |
+| 8   | 11/04/2024 | THU  | 4-6 | Finish the scheduling engine (add enemies and shooting patterns, template moving patterns), lance strike | 2    | Pause and auto-pause, music playback from level script, music for stages 1 and 2, refactorings                                                |
 | 9   | 12/04/2024 | FRI  | 4-6 | Layout enemy schedule on all three stages, shot upgrades (rocket, bomb) ??                               |      |                                                                                                                                               |
 | 10  | 13/04/2024 | SAT  | 4-6 | 1-st and 2-nd stage bosses                                                                               |      |                                                                                                                                               |
 | 11  | 14/04/2024 | SUN  | 4-6 | Final boss                                                                                               |      |                                                                                                                                               |

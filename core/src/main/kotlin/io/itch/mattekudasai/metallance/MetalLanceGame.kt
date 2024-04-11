@@ -2,8 +2,10 @@ package io.itch.mattekudasai.metallance
 
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputProcessor
 import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.screen.IntroScreen
+import io.itch.mattekudasai.metallance.screen.PausableScreen
 import io.itch.mattekudasai.metallance.screen.TitleScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
@@ -16,17 +18,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         Gdx.app.logLevel = Application.LOG_DEBUG
         // TODO: showIntro() instead
         if (true) {
-            switchToScreen(
-                GameScreen(
-                    playMusic = false,
-                    setRenderMode = { mode, stage ->
-                        getScreen<PixelPerfectScreen>().updateScreenMode(mode, stage)
-                    },
-                    setTint = { tint ->
-                        getScreen<PixelPerfectScreen>().updateTint(tint)
-                    }
-                )
-            )
+            showGameScreen()
         } else {
             showIntro()
         }
@@ -43,6 +35,9 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     private fun showGameScreen() {
         switchToScreen(
             GameScreen(
+                configuration = GameScreen.Configuration(
+                    levelPath = "levels/tutorial.txt"
+                ),
                 setRenderMode = { mode, stage ->
                     getScreen<PixelPerfectScreen>().updateScreenMode(mode, stage)
                 },
@@ -53,11 +48,11 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         )
     }
 
-    private fun switchToScreen(screen: KtxScreen) {
+    private fun <T> switchToScreen(screen: T) where T: KtxScreen, T: InputProcessor {
         removeScreen(shownScreen.javaClass)
         addScreen(
             PixelPerfectScreen(
-                screen = screen,
+                screen = PausableScreen(screen),
                 virtualWidth = VIRTUAL_WIDTH,
                 virtualHeight = VIRTUAL_HEIGHT
             )

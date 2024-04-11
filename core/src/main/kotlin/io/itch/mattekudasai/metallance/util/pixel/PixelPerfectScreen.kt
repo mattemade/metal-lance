@@ -45,6 +45,7 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
 
     init {
         screen.autoDisposing()
+
     }
 
     fun updateScreenMode(mode: Int, stage: Int) {

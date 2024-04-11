@@ -60,7 +60,6 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private var currentWaitTime = 0f
 
     init {
-        Gdx.input.inputProcessor = this
         music.play()
         music.isLooping = true
     }

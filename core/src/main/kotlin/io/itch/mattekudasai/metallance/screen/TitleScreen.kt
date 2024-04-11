@@ -40,7 +40,6 @@ class TitleScreen(val startGame: () -> Unit) : KtxScreen, KtxInputAdapter, Dispo
     }
 
     init {
-        Gdx.input.inputProcessor = this
         music.play()
         music.isLooping = true
     }
