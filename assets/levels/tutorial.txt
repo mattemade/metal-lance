@@ -1,58 +1,57 @@
-B  simulation
-M  stop
-D  4  0
-C  0.8  1.0  0.8
-W  2
-T  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
-W  8
-T  MOVE WITH WASD\OR ARROWS  0.5  0.8
-W  3
-C  0.8  1.0  0.8
-W  2
-T  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
-W  1
-C  0.8  0.2  0.2
-W  0.1
-C  0.8  1.0  0.8
-W  4
-C  0.8  0.2  0.2
-W  0.1
-C  0.8  1.0  0.8
-W  2
-T  AVOID HAZARDS  0.5  0.8
-W  2
-C  0.8  0.2  0.2
-W  0.1
-C  0.8  1.0  0.8
-R  3  A0  RTL  0.2  1  20  P
-W  4
-C  0.8  0.2  0.2
-W  0.1
-C  0.8  1.0  0.8
-W  2
-T  HOLD K OR Z TO ATTACK  0.5  0.8
-W  8
-T  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
-#W  8
-#T  ONCE CHARGED, HOLD J OR X\TO PIERCE THROUGH  0.5  0.8
-W  9
-T  GOOD LUCK  0.5  0.8
-W  2
-C  0.8  0.2  0.2
+setting  simulation
+tint  0.8  1.0  0.8
+goto  21
+wait  2
+text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
+wait  8
+text  MOVE WITH WASD\OR ARROWS  0.5  0.8
+wait  3
+tint  0.8  1.0  0.8
+wait  2
+text  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
+wait  1
+tint  0.8  0.2  0.2
+wait  0.1
+tint  0.8  1.0  0.8
+wait  4
+tint  0.8  0.2  0.2
+wait  0.1
+tint  0.8  1.0  0.8
+wait  2
+text  AVOID HAZARDS  0.5  0.8
+wait  2
+tint  0.8  0.2  0.2
+wait  0.1
+tint  0.8  1.0  0.8
+R  3  A0  RTL  0.5  1  20  P
+wait  4
+tint  0.8  0.2  0.2
+wait  0.1
+tint  0.8  1.0  0.8
+wait  2
+text  HOLD K OR Z TO ATTACK  0.5  0.8
+wait  8
+text  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
+#wait  8
+#text  ONCE CHARGED, HOLD J OR X\TO PIERCE THROUGH  0.5  0.8
+wait  9
+text  GOOD LUCK  0.5  0.8
+wait  2
+tint  0.8  0.2  0.2
 R  1  A0  RTL  0.2  2  30  P
 R  1  A0  RTL  0.4  3  50  P
 R  1  A0  RTL  0.6  4  40  P
 R  1  A0  RTL  0.8  5  20  P
-W  6
-C  0.8  1.0  0.8
-W  1
-C  1.0  1.0  1.0
-W  1
-T  HOPE TO SEE YOU LATER\WHEN THE GAME IS READY  0.5  0.8
-W  8
-T  I'M UPDATING THE DEMO\EVERY OTHER DAY,\SO YOU CAN CHECK IT TOMORROW  0.5  0.8
-W  9
-C  0.8  1.0  0.8
-T  TEST RESULT: SUCCESS\FINISHING SIMULATION...  0.5  0.8
-W  8
-E
+wait  6
+tint  0.8  1.0  0.8
+wait  1
+tint  1.0  1.0  1.0
+wait  1
+text  HOPE TO SEE YOU LATER\WHEN THE GAME IS READY  0.5  0.8
+wait  8
+text  I'M UPDATING THE DEMO\EVERY OTHER DAY,\SO YOU CAN CHECK IT TOMORROW  0.5  0.8
+wait  9
+tint  0.8  1.0  0.8
+text  TEST RESULT: SUCCESS\FINISHING SIMULATION...  0.5  0.8
+wait  8
+end

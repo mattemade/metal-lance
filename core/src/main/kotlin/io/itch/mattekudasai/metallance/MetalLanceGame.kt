@@ -19,7 +19,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         // TODO: set to LOG_NONE
         Gdx.app.logLevel = Application.LOG_DEBUG
         // TODO: showIntro() instead
-        if (false) {
+        if (true) {
             showGameScreen(
                 GameScreen.Configuration(
                     levelPath = "levels/stage1.txt"
@@ -74,6 +74,9 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                         "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
                         "levels/stage3.txt" -> showOutro()
                     }
+                },
+                restart = {
+                    showGameScreen(configuration)
                 }
             )
         )

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
+import io.itch.mattekudasai.metallance.`object`.Shot
 import io.itch.mattekudasai.metallance.player.Controls.isBackward
 import io.itch.mattekudasai.metallance.player.Controls.isDown
 import io.itch.mattekudasai.metallance.player.Controls.isForward
@@ -24,6 +25,7 @@ class Flagship(
     private val explosionTexture: Texture,
     private val initialLivesLeft: Int,
     private val initialPower: Float,
+    private val initialCharge: Float,
     private val initialShipType: Int,
     private val shot: (shipType: Int) -> Unit
 ) : SimpleSprite("texture/ship/normal.png"), KtxInputAdapter {
@@ -55,6 +57,9 @@ class Flagship(
 
     var lives = initialLivesLeft
     var power: Float = initialPower // 0 to 1
+        private set
+
+    var charge: Float = initialCharge
         private set
     private val shootingCooldown: Float
         get() = (1f - power*0.9f) * SHOOTING_COOLDOWN
@@ -162,14 +167,17 @@ class Flagship(
 
     fun powerUp() {
         power = min(1f, power + 1f / ((shipType + 1) * 5f))
-        if (power == 1f && shipType < shipTextures.size - 1) {
-            transform()
-            power = 0f
-        }
+    }
+
+    fun chargeUp() {
+        charge = min(1f, charge + 0.2f)
     }
 
     fun transform() {
-        shipType++
+        val oldShipType = shipType++
+        if (oldShipType != shipType) {
+            power = 0f
+        }
     }
 
     // TODO: maybe reuse is for game over?
@@ -191,6 +199,7 @@ class Flagship(
         timeToStartOver = 2f
         //state.position.set(40f, worldHeight / 2f)
         power = 0f
+        charge = 0f
         return true
     }
 

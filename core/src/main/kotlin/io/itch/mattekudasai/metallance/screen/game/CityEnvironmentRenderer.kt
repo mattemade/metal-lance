@@ -17,7 +17,7 @@ class CityEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
 
     private val bg0TexturePack = TexturePack (
         Texture("texture/level/city_bg0.png".overridable).autoDisposing(),
-        tint = Color(0.01f, 0.01f, 0.01f, 1f),
+        tint = Color(0.1f, 0.1f, 0.1f, 1f),
         30f,
         0.125f,
         offsetY = 20f
@@ -25,7 +25,7 @@ class CityEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
 
     private val bg1TexturePack = TexturePack (
         Texture("texture/level/city_bg1.png".overridable).autoDisposing(),
-        tint = Color(0.05f, 0.05f, 0.05f, 1f),
+        tint = Color(0.224f, 0.224f, 0.224f, 1f),
         60f,
         0.250f,
     )

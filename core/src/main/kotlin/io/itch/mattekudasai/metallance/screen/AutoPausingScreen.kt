@@ -41,7 +41,7 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
     private val pauseMessage = listOf("CLICK HERE OR PRESS P TO PLAY")
     private val camera: Camera = OrthographicCamera()
     private val viewport: Viewport = FitViewport(0f, 0f, camera)
-    private val pauseColor: Color = Color(0.001f, 0.001f, 0.001f, 0.9f)
+    private val pauseColor: Color = Color(0.0316f, 0.0316f, 0.0316f, 0.5f)
     private var ignoreNextResize = true
 
     init {

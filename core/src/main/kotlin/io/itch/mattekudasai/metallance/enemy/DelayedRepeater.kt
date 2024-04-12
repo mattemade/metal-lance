@@ -1,20 +1,24 @@
 package io.itch.mattekudasai.metallance.enemy
 
 class DelayedRepeater(
-    private val nextDelay: (time: Float) -> Float,
-    initialDelay: Float = nextDelay(0f),
-    private val action: () -> Unit,
+    private val nextDelay: (counter: Int, time: Float) -> Float,
+    initialDelay: Float = nextDelay(0, 0f),
+    private val action: (counter: Int, time: Float) -> Boolean,
 ) {
     private var internalTimer = 0f
+    private var repeatedCounter = 0
     private var currentDelay = initialDelay
 
-    fun update(delta: Float) {
+    fun update(delta: Float): Boolean {
         internalTimer += delta
-        while (internalTimer >= currentDelay) {
-            action()
+        var result = true
+        while (result && internalTimer >= currentDelay) {
+            repeatedCounter++
+            result = action(repeatedCounter, internalTimer)
             internalTimer -= currentDelay
-            currentDelay = nextDelay(internalTimer)
+            currentDelay = nextDelay(repeatedCounter, internalTimer)
         }
+        return result
     }
 
 }

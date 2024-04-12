@@ -1,22 +1,15 @@
-B  city
-N  kill  20
-M  music/stage1.ogg  0.1
-T  STAGE 1\RUINED CITY  0.5  0.8
-W  5
-T
-#R  1  A0  RTL  0.2  0  0  P
-R  4  A0  RTL  0.4  3  20  P
-W  2
-R  4  A0  RTL  0.6  4  20  P
-#R  1  A3  RTL  0.8  0  0  P
-W  2
-T  WORK IN PROGRESS...\BUT HERE ARE SOME RANDOM ALIENS  0.5  0.8
-W  9
-T  DEFEAT 20 OF THEM TO\ADVANCE TO THE NEXT LEVEL  0.5  0.8
-W  9
-T
-#W  1
-#S  A0A0A0A0A1 RTL 0.8 10 1 P
-#W  4
-#S  A0A0A0A0A1 RTL 0.2 10 1 P
-#W  4
+setting  city
+goto  8
+goal  kill  20
+music  play  music/stage1.ogg  0.1
+text  STAGE 1\RUINED CITY  0.5  0.8
+wait  5
+text
+spawn  2  B0 B0 B0 B0 B0  peach  right  0.5  lin left 20
+wait  5
+spawn  0  C0  pall  right  0.5  lin left 20
+wait  5
+spawn  0  D0  pall  right  0.5  lin left 20
+wait  5
+spawn  0  E0  pall  right  0.5  lin left 20
+wait 2

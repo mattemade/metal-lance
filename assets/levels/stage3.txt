@@ -1,22 +1,22 @@
-C  1.0  1.0  8.0
-N  kill  20
-#M  music/stage3.ogg  0.1
-T  STAGE 3\OUTER SPACE  0.5  0.8
-W  5
+tint  1.0  1.0  8.0
+goal  kill  20
+#music  play  music/stage3.ogg  0.1
+text  STAGE 3\OUTER SPACend  0.5  0.8
+wait  5
 T
 R  3  A0  RTL  R0.2-0.8  2  30  P
-W  1
+wait  1
 R  3  A1  RTL  R0.2-0.8  3  50  P
-W  1
+wait  1
 R  3  A1  RTL  R0.2-0.8  4  40  P
-W  1
-T  WORK IN PROGRESS...\BUT HERE ARE SOME RANDOM ALIENS  0.5  0.8
-W  9
-T  DEFEAT 20 OF THEM TO\FINISH THE GAME  0.5  0.8
-W  9
+wait  1
+text  WORK IN PROGRESS...\BUT HERE ARE SOME RANDOM ALIENS  0.5  0.8
+wait  9
+text  DEFEAT 20 OF THEM TO\FINISH THE GAMend  0.5  0.8
+wait  9
 T
-#W  1
+#wait  1
 #S  A0A0A0A0A1 RTL 0.8 10 1 P
-#W  4
+#wait  4
 #S  A0A0A0A0A1 RTL 0.2 10 1 P
-#W  4
+#wait  4

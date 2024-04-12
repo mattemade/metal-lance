@@ -2,13 +2,13 @@ package io.itch.mattekudasai.metallance.enemy
 
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
-import io.itch.mattekudasai.metallance.player.Shot
+import io.itch.mattekudasai.metallance.`object`.Shot
 import kotlin.math.abs
 import kotlin.math.sign
 
 class ShootingPattern(
     val initialDelay: Float,
-    val nextDelay: (Float) -> Float,
+    val nextDelay: (Int, Float) -> Float,
     val shotTextureIndex: Int,
     val onShoot: (enemy: Enemy, flagshipPosition: Vector2, texture: Texture) -> List<Shot>
 ) {
@@ -16,23 +16,23 @@ class ShootingPattern(
     companion object {
         fun Int.toPattern(): ShootingPattern =
             when (this) {
-                0 -> ShootingPattern(2f, { 2f }, 0) { enemy, flagshipPosition, texture ->
+                0 -> ShootingPattern(2f, { _, _ -> 2f }, 0) { enemy, flagshipPosition, texture ->
                     spawnHomingEnemyShot(enemy, flagshipPosition, texture)
                 }
 
-                1 -> ShootingPattern(1f, { 1f }, 0) { enemy, flagshipPosition, texture ->
+                1 -> ShootingPattern(1f, { _, _ -> 1f }, 0) { enemy, flagshipPosition, texture ->
                     spawnHomingEnemyShot(enemy, flagshipPosition, texture, 100f) { true }
                 }
 
-                2 -> ShootingPattern(1f, { 1f }, 0) { enemy, flagshipPosition, texture ->
+                2 -> ShootingPattern(1f, { _, _ -> 1f }, 0) { enemy, flagshipPosition, texture ->
                     spawnHomingEnemyShot(enemy, flagshipPosition, texture, 10f) { it < 3f }
                 }
 
-                3 -> ShootingPattern(0.61f, { 0.6f }, 0) { enemy, flagshipPosition, texture ->
+                3 -> ShootingPattern(0.61f, { _, _ -> 0.6f }, 0) { enemy, flagshipPosition, texture ->
                     spawnHomingEnemyShot(enemy, flagshipPosition, texture, 10f) { it < 1f }
                 }
 
-                else -> ShootingPattern(2f, { 2f }, 0) { enemy, _, texture ->
+                else -> ShootingPattern(2f, { _, _ -> 2f }, 0) { enemy, _, texture ->
                     spawnHomingEnemyShot(enemy, enemy.initialPosition.cpy().add(-100f, 0f), texture)
                 }
             }

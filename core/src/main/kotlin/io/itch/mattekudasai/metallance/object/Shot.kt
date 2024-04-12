@@ -1,4 +1,4 @@
-package io.itch.mattekudasai.metallance.player
+package io.itch.mattekudasai.metallance.`object`
 
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
@@ -19,7 +19,7 @@ class Shot(
     var internalTimer = 0f
         private set
 
-    var deadTime = 3f // time to keep the shot off-screen, in case it will return back
+    var offscreenTimeToDisappear = DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR // time to keep the shot off-screen, in case it will return back
     var currentTexture = 0
     var nextTextureIn = textures[0].second
 
@@ -58,6 +58,7 @@ class Shot(
         const val SPEED_FAST = 300f
         const val SPEED_SLOW = 80f
         const val SPEED_POWER_UP = 40f
+        const val DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR = 3f
     }
 
 }

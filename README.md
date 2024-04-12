@@ -28,6 +28,22 @@ Licenses:
 * all non-code assets, such as visual and audio resources, are covered by CC-BY-4.0 license (
   see [LICENSE-ASSETS](LICENSE-CODE))
 
+## Section-based progress
+
+| Section    | Dirty | Clean | Music | SFX | Art |
+|------------|-------|-------|-------|-----|-----|
+| Intro      | 100   | 0     | 0     | 50  | 0   |
+| Title      | 100   | 10    | 0     | 0   | 10  |
+| Tutorial   | 100   | 95    | 0     | 100 | 100 |
+| Stage 1    | 100   | 1     | 100   | 0   | 25  |
+| Boss 1     | 100   | 1     | 0     | 0   | 25  |
+| Stage 2    | 100   | 0     | 100   | 0   | 0   |
+| Boss 2     | 100   | 0     | 100   | 0   | 0   |
+| Stage 3    | 100   | 0     | 0     | 0   | 0   |
+| Final boss | 100   | 0     | 0     | 0   | 0   |
+| Game over  | 100   | 0     | 0     | 0   | 0   |
+| Outro      | 100   | 0     | 0     | 0   | 0   |
+
 ## Dev log
 
 | Day | Date       | Wkdy | MAX | Plan                                                                                       | Spnt | Done                                                                                                                                                                                                                                                                                                                   |
@@ -40,8 +56,8 @@ Licenses:
 | 6   | 09/04/2024 | TUE  | 4-6 | Start screen, intro sequence (add some story), shape and shot upgrades                     | 3    | Changing plans, create artist's build with overridable resources, added dummy intro and title screens, ship shape upgrades, organized assets                                                                                                                                                                           |
 | 7   | 10/04/2024 | WED  | 4-6 | First stage of ruined city, enemy shooting patterns, enemy scheduling                      | 5    | Level scripting, tutorial sequence, some refactorings, runtime render mode via shader                                                                                                                                                                                                                                  |
 | 8   | 11/04/2024 | THU  | 4-6 | Expand the scheduling engine (add enemies and shooting patterns, template moving patterns) | 8    | Pause and auto-pause, music playback from level script, music for stages 1 and 2, refactorings, testing animated upgrades, refined tutorial and start screens, added some city environment, refactored and declared some shooting patterns, completed the game flow (though transitions are missing), a bunch of fixes |
-| 9   | 12/04/2024 | FRI  | 4-6 | Finish the scheduling engine, layout enemy schedule on all three stages, lance strike      |      |                                                                                                                                                                                                                                                                                                                        |
-| 10  | 13/04/2024 | SAT  | 4-6 | 1-st and 2-nd stage bosses                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
+| 9   | 12/04/2024 | FRI  | 4-6 | Finish the scheduling engine                                                               | 5    | Finished scheduling engine, refined power-ups, enemies and bombs                                                                                                                                                                                                                                                       |
+| 10  | 13/04/2024 | SAT  | 4-6 | Layout enemy schedule on all three stages, lance strike, 1-st and 2-nd stage bosses        |      |                                                                                                                                                                                                                                                                                                                        |
 | 11  | 14/04/2024 | SUN  | 4-6 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
 | 12  | 15/04/2024 | MON  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
 | 13  | 16/04/2024 | TUE  | 1-2 | Formation upgrades (more controllable ships in fleet)?, widescreen upgrade?                |      |                                                                                                                                                                                                                                                                                                                        |
@@ -58,8 +74,8 @@ Licenses:
     * Shot modificator: blaster, rocket, bomb
 * shot upgrades (rocket, bomb) ??
 * transitions (at least fade out / fade in)
-  * between intro pictures
-  * between levels
+    * between intro pictures
+    * between levels
 * level environments (lightning strikes, background/foreground objects, etc.)
 
 Next section was generated by [gdx-liftoff](https://github.com/libgdx/gdx-liftoff), leaving it as is since it has some

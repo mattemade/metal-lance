@@ -14,7 +14,8 @@ fun main() {
     Lwjgl3Application(MetalLanceGame(), Lwjgl3ApplicationConfiguration().apply {
         setTitle("metal-lance")
         setWindowedMode(1024, 800)
-        useVsync(false)
+        useVsync(true)
+        setForegroundFPS(60)
 
         setWindowIcon(*(arrayOf(128, 64, 32, 16).map { "libgdx$it.png" }.toTypedArray()))
     })

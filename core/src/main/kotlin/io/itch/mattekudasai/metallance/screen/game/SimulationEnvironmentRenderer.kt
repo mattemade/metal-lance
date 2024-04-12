@@ -9,12 +9,13 @@ import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.withTransparency
 import ktx.graphics.use
+import kotlin.math.sqrt
 
 class SimulationEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
 
     private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer() }
-    private val colors = List(2) { Color.WHITE.cpy().mul(1f / (128f - it * 100f)) }
-    private val translucentColor = Color(0.1f, 0.1f, 0.1f, 0.7f)
+    private val colors = List(2) { Color.WHITE.cpy().mul(sqrt(1f / (128f - it * 100f))) }
+    private val translucentColor = Color(0.316f, 0.316f, 0.316f, 0.7f)
 
     override fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
