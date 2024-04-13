@@ -2,9 +2,13 @@ package io.itch.mattekudasai.metallance.stage
 
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.Align
 import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
 import io.itch.mattekudasai.metallance.enemy.Enemy
+import io.itch.mattekudasai.metallance.enemy.ShootingPattern.Companion.toPatternInt
+import java.util.*
+import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -18,6 +22,8 @@ class Level(
     private val playMusic: (assetPath: String, volume: Float) -> Unit,
     private val winningCondition: (condition: String, counter: Int) -> Unit,
     private val endSequence: () -> Unit,
+    private val getWorldWidth: () -> Float,
+    private val getWorldHeight: () -> Float,
 ) {
 
     private val lines = scriptFile.reader().readLines()
@@ -78,6 +84,7 @@ class Level(
             }
         )
     }
+
     private fun prepareSpawner(split: List<String>, fromIndex: Int = 1) {
         var currentIndex = fromIndex
         val withinTime = split.getFloat(currentIndex++)
@@ -85,22 +92,64 @@ class Level(
         val reward = split.getString(currentIndex++).toReward(group.size)
         val period = withinTime / group.size
         val spawnSide = split.getString(currentIndex++).toNormal()
-        val sideFactors = split.getString(currentIndex++).split(" ").map { it.toFloat() }
+        val sideFactors = split.getString(currentIndex++).split(" ").map {
+            it.parseToFloat()
+        }
+        val subscription = ShootingPatternSubscription()
         var updatePosition = resetPosition()
+        var sequence = startSequence()
         var trajectoryIndex = currentIndex
+        var from: Float = 0f
+        var to: Float = Float.MAX_VALUE
+        var activePeriods = Stack<Pair<Float, Float>>()
         while (trajectoryIndex < split.size) {
             val trajectory = split.getString(trajectoryIndex++).split(" ")
             val direction = trajectory.getString(1).toNormal()
             when (trajectory.getString(0)) {
-                "lin" -> updatePosition += linearTrajectory(direction, trajectory.getFloat(2))
-                "sin" -> updatePosition += sinTrajectory(
+                "after" -> {
+                    from += trajectory.getFloat(1)
+                    to = Float.MAX_VALUE
+                }
+
+                "for" -> to = from + trajectory.getFloat(1)
+                "(" -> {
+                    // TODO: it does not work properly yet!!!
+                    updatePosition += sequence
+                    activePeriods.push(from to to)
+                    from = 0f
+                    to = Float.MAX_VALUE
+                    sequence = startSequence()
+                }
+
+                ")" -> {
+                    sequence = sequence.wrapSequence(from, to)
+                    val lastActivePeriod = activePeriods.pop()
+                    from = lastActivePeriod.first
+                    to = lastActivePeriod.second
+                    updatePosition += sequence.activeIn(from, to)
+                    sequence = startSequence()
+                }
+
+                "lin" -> sequence += linearTrajectory(direction, trajectory.getFloat(2)).activeIn(from, to)
+                "sin" -> sequence += sinTrajectory(
                     direction,
                     trajectory.getFloat(2),
                     trajectory.getFloat(3),
                     trajectory.getFloat(4)
-                )
+                ).activeIn(from, to)
+
+                "move" -> sequence += directedTrajectory(
+                    Vector2(trajectory.getFloat(1) * getWorldWidth(), trajectory.getFloat(2) * getWorldHeight()),
+                    to - from
+                ).activeIn(from, to)
+
+                "shoot" -> {
+                    // TODO: it does not work properly in sequences!!!
+                    sequence += changeShootingPattern(subscription, trajectory.getString(1), from)
+                }
             }
         }
+        updatePosition += sequence
 
         val groupSizeLessOneFloat = (group.size - 1).toFloat()
         val sideFactorsSizeLessOne = sideFactors.size - 1
@@ -124,7 +173,7 @@ class Level(
                 spawnEnemy(
                     EnemyConfiguration(
                         enemyType = enemyLine[0] - 'A',
-                        shootingPattern = enemyLine.substring(1).toInt(),
+                        shootingPatternSubscription = subscription,
                         spawnSide = spawnSide,
                         spawnSideFactor = sideFactor,
                         updatePositionDt = updatePosition,
@@ -139,6 +188,14 @@ class Level(
                         }
                     )
                 )
+                val substring = enemyLine.substring(1)
+                if (substring[0].isLetter()) {
+                    subscription.onChanged(substring)
+                } else {
+                    subscription.onChanged(substring.toLong())
+                }
+
+
                 counter < group.size
             },
         )
@@ -146,10 +203,11 @@ class Level(
 
     private fun Char.health() =
         when (this) {
+            'A' -> 1 to 0f
             'B' -> 1 to 0f
-            'C' -> 2 to 0f
-            'D' -> 3 to 0.5f
-            'E' -> 10 to 0.1f
+            'C' -> 2 to 1f
+            'D' -> 3 to 1f
+            'E' -> 10 to 0f
             else -> 1 to 0f
         }
 
@@ -161,10 +219,33 @@ class Level(
         else -> Align.right
     }
 
+    private fun (Enemy.(time: Float) -> Unit).activeIn(from: Float, to: Float): (Enemy.(time: Float) -> Unit) =
+        { time ->
+            this@activeIn(
+                if (time >= from) {
+                    if (time < to) time - from else to - from
+                } else 0f
+            )
+        }
+
     private operator fun (Enemy.(time: Float) -> Unit).plus(another: Enemy.(time: Float) -> Unit): Enemy.(time: Float) -> Unit =
         { time ->
             this@plus(time)
             another(time)
+        }
+
+    private fun startSequence(): Enemy.(time: Float) -> Unit = { }
+
+    private fun (Enemy.(time: Float) -> Unit).wrapSequence(from: Float, to: Float): (Enemy.(time: Float) -> Unit) =
+        { time ->
+            var remainingTime = time
+            while (remainingTime > 0f) {
+                val actualTime = min(remainingTime, to)
+                if (actualTime >= from) {
+                    this@wrapSequence(actualTime)
+                }
+                remainingTime -= to
+            }
         }
 
     private fun resetPosition(): Enemy.(time: Float) -> Unit = {
@@ -185,6 +266,31 @@ class Level(
             }
         )
     }
+
+    private fun directedTrajectory(position: Vector2, toMinusFromTime: Float): Enemy.(time: Float) -> Unit = { time ->
+        if (time >= toMinusFromTime) {
+            internalPosition.set(position)
+        } else {
+            internalPosition.add(position.cpy().sub(internalPosition).scl(time / toMinusFromTime))
+        }
+    }
+
+    private fun changeShootingPattern(
+        subscription: ShootingPatternSubscription,
+        pattern: String,
+        from: Float
+    ): Enemy.(time: Float) -> Unit {
+        var changed = false
+        return { time ->
+            if (time < from) {
+                changed = false
+            } else if (!changed) {
+                subscription.onChanged(pattern)
+                changed = true
+            }
+        }
+    }
+
 
     private fun sinTrajectory(
         direction: Int,
@@ -224,15 +330,17 @@ class Level(
         if (index >= size) {
             defaultValue
         } else {
-            val statement = get(index)
-            if (statement[0] == 'R') {
-                val parts = statement.substring(1).split("-")
-                val from = parts.getFloat(0)
-                val to = parts.getFloat(1)
-                from + Random.nextFloat() * to
-            } else {
-                statement.toFloat()
-            }
+            get(index).parseToFloat()
+        }
+
+    private fun String.parseToFloat() =
+        if (this[0] == 'R') {
+            val parts = this.substring(1).split("-")
+            val from = parts.getFloat(0)
+            val to = parts.getFloat(1)
+            from + Random.nextFloat() * to
+        } else {
+            this.toFloat()
         }
 
     private fun String.toReward(groupSize: Int): Reward =
@@ -254,7 +362,7 @@ class Level(
 
     class EnemyConfiguration(
         val enemyType: Int,
-        val shootingPattern: Int,
+        val shootingPatternSubscription: ShootingPatternSubscription,
         val spawnSide: Int = Align.right, // e.g. "where does it come from?"
         val spawnSideFactor: Float = 0.5f, // e.g. "how far from 0 to SIDE_LENGTH does it come from?"
         val updatePositionDt: Enemy.(time: Float) -> Unit,
@@ -267,5 +375,32 @@ class Level(
         val type: Char,
         var condition: Int
     )
+
+    class ShootingPatternSubscription {
+
+        private var activeSubscription: ((Long) -> Unit)? = null
+        private var lastKnownPattern: Long = -1
+        fun onChanged(pattern: Long) {
+            if (pattern != lastKnownPattern) {
+                lastKnownPattern = pattern
+                activeSubscription?.invoke(pattern)
+            }
+        }
+
+        fun onChanged(code: String) {
+            val pattern = code.toPatternInt()
+            if (pattern != lastKnownPattern) {
+                lastKnownPattern = pattern
+                activeSubscription?.invoke(pattern)
+            }
+        }
+
+        fun subscribe(action: (Long) -> Unit) {
+            activeSubscription = action
+            if (lastKnownPattern > -1) {
+                action.invoke(lastKnownPattern)
+            }
+        }
+    }
 }
 

@@ -1,15 +1,46 @@
 setting  city
-goto  8
-goal  kill  20
+#goto  35
+#goal  kill  20
 music  play  music/stage1.ogg  0.1
 text  STAGE 1\RUINED CITY  0.5  0.8
-wait  5
+wait  2
+spawn  3  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 40
+wait  2
 text
-spawn  2  B0 B0 B0 B0 B0  peach  right  0.5  lin left 20
+wait  1
+spawn  3  BB BB BB  pall  right  0.3  sin bottom 0 1.7 10  lin left 40
+wait  4
+spawn  3  BB BB BB  eall  bottom  0.9 0.5  lin top 40
+wait  4
+spawn  3  BB BB BB  eall  top  0.3 0.6  lin bottom 40
+wait  4
+spawn  0  CD  peach  right  0.4  lin left 30  sin bottom 0 1 40
+wait  3
+spawn  3  CD BB BB BB  pall  right  0.6 0.3  lin left 40  sin top 0 1 40
+wait  6
+spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.05 0.8  lin left 80
+wait  3
+spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.95 0.2  lin left 80
 wait  5
-spawn  0  C0  pall  right  0.5  lin left 20
+spawn  0  BD BD BD BD BD BD BD BD BD  none  top  0.05 0.95  sin bottom 0 3 80  lin top 40
+wait  1
+spawn  0  BD BD BD BD BD BD BD BD BD  none  bottom  0.05 0.95  sin top 0 3 80  lin bottom 40
+wait  2
+spawn  0  CD  peach  left  0.3  lin right 40
+spawn  0  CD  peach  right  0.7  lin left 40
+wait  0.5
+spawn  0  BB BB  eall  left  0.2 0.4  lin right 40
+spawn  0  BB BB  eall  right  0.6 0.8  lin left 40
 wait  5
-spawn  0  D0  pall  right  0.5  lin left 20
-wait  5
-spawn  0  E0  pall  right  0.5  lin left 20
-wait 2
+wait  1
+#spawn  0  DB3S  seach  right  0.5  for 1  move 0.5 0.5  after 2  for 10  sin left 0 1 80  sin top 1.57 1 80
+spawn  0  DB3S  seach  right  0.5  for 1  move 0.8 0.5  after 2  for 1  move 0.5 0.8  after 2  for 1  move 0.2 0.5  after 2  for 1  move 0.5 0.2  after 2  for 1  move 0.8 0.5  after 2  lin left 80
+
+#spawn  2  B0 B0 B0 B0 B0  eeach  right  0.2  lin left 50
+#spawn  2  B0  eeach  right  0.4  for 2  lin left 50  after 3  for 2  sin top 0 2 20  after 3  lin left 50
+#spawn  2  B0  eeach  right  0.4  for 1  lin left 50  after 2  (  for 2  move 0.5 0.5  after 3  for 5  sin left 0 2 50  sin top 0 2 50  )
+#spawn  2  B0  eeach  right  0.4  for 2  lin left 20  after 2  (  after 0  shoot 1  for 5  lin left 20  after 5  shoot 2  for 5  lin right 20  after 5  shoot 3  for 5  lin left 20  )
+wait  10
+text  THIS IS EVERYTHING SO FAR\COME BACK LATER FOR MORE  0.5  0.8
+wait  12
+end

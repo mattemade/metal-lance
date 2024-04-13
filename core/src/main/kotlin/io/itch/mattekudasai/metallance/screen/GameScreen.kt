@@ -15,8 +15,8 @@ import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import io.itch.mattekudasai.metallance.enemy.ShootingPattern.Companion.toPattern
 import io.itch.mattekudasai.metallance.`object`.Bomb
-import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.`object`.Shot
+import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.screen.game.CityEnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.EnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.NoopEnvironmentRenderer
@@ -82,14 +82,31 @@ class GameScreen(
     }
 
     //private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
-    private val powerUpTextures = (0..2).map { pIndex ->
+    private val powerUpTextures = (0..2).map { index ->
         (0..9).map { frame ->
-            Texture("texture/upgrade/animated/p${pIndex}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
+            Texture("texture/upgrade/power/p${index}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
         }
     }
-    private var currentPTexture = 0
-    private val energyPodTexture: Texture by remember { Texture("texture/upgrade/energy.png") }
-    private val shipUpgradeTexture: Texture by remember { Texture("texture/upgrade/ship.png") }
+    private var currentPowerTexture = 0
+
+    //private val energyPodTexture: Texture by remember { Texture("texture/upgrade/energy.png".overridable) }
+    private val energyPodTextures = (5..5).map { index ->
+        ((if (index == 4) 1 else 0)..(if (index == 1 || index == 4) 15 else 9)).map { frame ->
+            Texture("texture/upgrade/energy/e${index}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
+        }
+    }
+    private var currentEnergyTexture = 0
+
+    //private val shipUpgradeTexture: Texture by remember { Texture("texture/upgrade/ship.png") }
+    private val shipUpgradeTextures = (0..1).map { index ->
+        if (index == 1) {
+            listOf(Texture("texture/upgrade/ship.png".overridable).autoDisposing() to 10f)
+        } else
+            (0..20).map { frame ->
+                Texture("texture/upgrade/ship/s${index}_$frame.png".overridable).autoDisposing() to if (frame == 20) 0.292f else 0.042f
+            }
+    }
+    private var currentShipUpgradeTexture = 0
     private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
     private var defeatToWin: Int = Integer.MAX_VALUE
     private var gameOverTimer: Float = 0f
@@ -115,41 +132,39 @@ class GameScreen(
         },
         spawnEnemy = { enemyConfiguration ->
             val enemyTexture = enemyTextures[enemyConfiguration.enemyType]
-            val initialPosition = Vector2()
-            if (Align.isRight(enemyConfiguration.spawnSide)) {
-                initialPosition.set(
-                    when {
-                        Align.isRight(enemyConfiguration.spawnSide) -> viewport.worldWidth + enemyTexture.width / 2f
-                        Align.isLeft(enemyConfiguration.spawnSide) -> viewport.worldWidth - enemyTexture.width / 2f
-                        else -> enemyConfiguration.spawnSideFactor * viewport.worldWidth
-                    },
-                    when {
-                        Align.isTop(enemyConfiguration.spawnSide) -> viewport.worldHeight + enemyTexture.height / 2f
-                        Align.isBottom(enemyConfiguration.spawnSide) -> viewport.worldHeight - enemyTexture.height / 2f
-                        else -> enemyConfiguration.spawnSideFactor * viewport.worldHeight
-                    }
-                )
+            val initialPosition = Vector2(
+                when {
+                    Align.isRight(enemyConfiguration.spawnSide) -> viewport.worldWidth + enemyTexture.width / 2f
+                    Align.isLeft(enemyConfiguration.spawnSide) -> -enemyTexture.width / 2f
+                    else -> enemyConfiguration.spawnSideFactor * viewport.worldWidth
+                },
+                when {
+                    Align.isTop(enemyConfiguration.spawnSide) -> viewport.worldHeight + enemyTexture.height / 2f
+                    Align.isBottom(enemyConfiguration.spawnSide) -> - enemyTexture.height / 2f
+                    else -> enemyConfiguration.spawnSideFactor * viewport.worldHeight
+                }
+            )
 
-            }
-            val pattern = enemyConfiguration.shootingPattern.toPattern()
             enemies += Enemy(
                 texture = enemyTexture,
                 explosionTexture = explosionTexture,
                 initialPosition = initialPosition,
                 updatePositionDt = enemyConfiguration.updatePositionDt,
-                initialShootingDelay = pattern.initialDelay,
-                nextShootingDelay = pattern.nextDelay,
                 shot = {
-                    enemyShots += pattern.onShoot(
+                    it.shootingPattern?.onShoot?.invoke(
                         it,
                         flagship.internalPosition,
-                        enemyShotTextures[pattern.shotTextureIndex]
-                    )
+                        enemyShotTextures[it.shootingPattern?.shotTextureIndex ?: 0]
+                    )?.let { enemyShots += it }
                 },
                 initialHitPoints = enemyConfiguration.initialHitPoints,
                 invincibilityPeriod = enemyConfiguration.invincibilityPeriod,
                 onDefeat = enemyConfiguration.onDefeat,
-            )
+            ).also { enemy ->
+                enemyConfiguration.shootingPatternSubscription.subscribe {
+                    enemy.shootingPattern = it.toPattern(viewport.worldWidth)
+                }
+            }
         },
         winningCondition = { condition, counter ->
             when (condition) {
@@ -177,7 +192,9 @@ class GameScreen(
                     it.isLooping = true
                 }
             }
-        }
+        },
+        getWorldWidth = { viewport.worldWidth },
+        getWorldHeight = { viewport.worldHeight },
     )
 
     val textDrawer: MonoSpaceTextDrawer by remember {
@@ -237,27 +254,31 @@ class GameScreen(
     }
 
     private fun spawnPowerUp(location: Vector2) {
-        currentPTexture = (currentPTexture + 1) % powerUpTextures.size
+        currentPowerTexture = (currentPowerTexture + 1) % powerUpTextures.size
         powerUps += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            textures = powerUpTextures[currentPTexture],
+            textures = powerUpTextures[currentPowerTexture],
             isRotating = false
         )
     }
+
     private fun spawnEnergyPod(location: Vector2) {
+        currentEnergyTexture = (currentEnergyTexture + 1) % energyPodTextures.size
         energyPods += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            texture = energyPodTexture,
+            textures = energyPodTextures[currentEnergyTexture],
             isRotating = false
         )
     }
+
     private fun spawnShipUpgrade(location: Vector2) {
+        currentShipUpgradeTexture = (currentShipUpgradeTexture + 1) % shipUpgradeTextures.size
         shipUpgrades += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            texture = shipUpgradeTexture,
+            textures = shipUpgradeTextures[currentShipUpgradeTexture],
             isRotating = false
         )
     }
@@ -269,8 +290,8 @@ class GameScreen(
             return x > -halfWidth && x < (viewport.worldWidth + halfWidth) && y > -halfHeight && y < (viewport.worldHeight + halfHeight)
         }
 
-/*    private val Vector2.isOnScreen: Boolean
-        get() = x > -10f && x < (viewport.worldWidth + 10f) && y > -10f && y < (viewport.worldHeight + 10f)*/
+    /*    private val Vector2.isOnScreen: Boolean
+            get() = x > -10f && x < (viewport.worldWidth + 10f) && y > -10f && y < (viewport.worldHeight + 10f)*/
 
     private var totalGameTime = 0f
 
@@ -300,12 +321,16 @@ class GameScreen(
         environmentRenderer.renderBackground(viewport, camera, totalGameTime, flagship.internalPosition)
         batch.use(camera) { batch ->
             enemyShots.forEach { it.draw(batch) }
+            enemies.forEach {
+                if (it.isAlive && (!it.isInvincible || !evenFrame)) {
+                    it.draw(batch)
+                }
+            }
         }
         bombs.forEach { it.draw(camera) }
         batch.use(camera) { batch ->
-            /*enemyShots.forEach { it.draw(batch) }*/
             enemies.forEach {
-                if (!it.isInvincible || !evenFrame) {
+                if (!it.isAlive) {
                     it.draw(batch)
                 }
             }
@@ -408,18 +433,6 @@ class GameScreen(
         powerUps.updatePickups(delta) { flagship.powerUp() }
         energyPods.updatePickups(delta) { flagship.chargeUp() }
         shipUpgrades.updatePickups(delta) { flagship.transform() }
-        powerUps.removeAll { powerUp ->
-            powerUp.update(delta)
-            if (powerUp.shouldJustDisappear(delta)) {
-                return@removeAll true
-            }
-            // flagship collision check
-            val flagshipHit = flagship.collides(powerUp, 8f, 6f)
-            if (flagshipHit) {
-                flagship.powerUp()
-            }
-            flagshipHit
-        }
         bombs.removeAll { !it.update(delta) }
 
         if (!flagship.isAlive) {
@@ -436,13 +449,13 @@ class GameScreen(
         if (flagship.startOver()) {
             bombs += Bomb(
                 flagship.internalPosition.cpy(),
-                speed = 200f,
+                speed = 400f,
                 maxRadius = viewport.worldHeight * 1.27f,
                 isEnemy = false,
                 stayFor = 0f,
-                fadeOutIn = 2f,
+                fadeOutIn = 1f,
                 outerColor = Color.WHITE,
-                innerColor = Color.DARK_GRAY.cpy().apply { a = 0.5f }
+                innerColor = Color.BLACK.cpy().apply { a = 0.6f }
             )
         } else {
             gameOverTimer = 2f

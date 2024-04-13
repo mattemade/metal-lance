@@ -17,9 +17,9 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
 
     override fun create() {
         // TODO: set to LOG_NONE
-        Gdx.app.logLevel = Application.LOG_DEBUG
+        Gdx.app.logLevel = Application.LOG_NONE
         // TODO: showIntro() instead
-        if (true) {
+        if (false) {
             showGameScreen(
                 GameScreen.Configuration(
                     levelPath = "levels/stage1.txt"
