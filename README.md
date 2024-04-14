@@ -2,7 +2,7 @@
 
 Game made for [1-bit jam #3](https://itch.io/jam/1-bit-jam-three/rate/2633292).
 
-Music tracks ([stage1](assets/music/stage1.ogg), [stage2](assets/music/stage2.ogg)) are made by nicole starlight:
+[Music tracks](assets/music) are made by nicole starlight:
 
 * https://nicolestarlight.itch.io/
 * https://soundcloud.com/nicolestarlight
@@ -33,13 +33,13 @@ Licenses:
 | Section    | Dirty | Clean | Music | SFX | Art |
 |------------|-------|-------|-------|-----|-----|
 | Intro      | 100   | 0     | 0     | 50  | 0   |
-| Title      | 100   | 10    | 0     | 0   | 10  |
+| Title      | 100   | 10    | 100   | 0   | 10  |
 | Tutorial   | 100   | 95    | 0     | 100 | 100 |
 | Stage 1    | 100   | 1     | 100   | 0   | 25  |
 | Boss 1     | 100   | 1     | 0     | 0   | 25  |
 | Stage 2    | 100   | 0     | 100   | 0   | 0   |
 | Boss 2     | 100   | 0     | 100   | 0   | 0   |
-| Stage 3    | 100   | 0     | 0     | 0   | 0   |
+| Stage 3    | 100   | 0     | 100   | 0   | 0   |
 | Final boss | 100   | 0     | 0     | 0   | 0   |
 | Game over  | 100   | 0     | 0     | 0   | 0   |
 | Outro      | 100   | 0     | 0     | 0   | 0   |
@@ -58,12 +58,12 @@ Licenses:
 | 8   | 11/04/2024 | THU  | 4-6 | Expand the scheduling engine (add enemies and shooting patterns, template moving patterns) | 8    | Pause and auto-pause, music playback from level script, music for stages 1 and 2, refactorings, testing animated upgrades, refined tutorial and start screens, added some city environment, refactored and declared some shooting patterns, completed the game flow (though transitions are missing), a bunch of fixes |
 | 9   | 12/04/2024 | FRI  | 4-6 | Finish the scheduling engine                                                               | 5    | Finished (not really) scheduling engine, refined power-ups, enemies and bombs                                                                                                                                                                                                                                          |
 | 10  | 13/04/2024 | SAT  | 4-6 | Layout the first stage                                                                     | 5    | Fixed a nasty shader bug, advancing the level engine, simplified describing shooting patterns, layout for a part of the 1st stage, finished the tutorial                                                                                                                                                               |
-| 11  | 14/04/2024 | SUN  | 4-6 | Layout enemy schedule on all three stages, simplified bosses for 1-st and 2-nd stages      |      |                                                                                                                                                                                                                                                                                                                        |
-| 12  | 15/04/2024 | MON  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
-| 13  | 16/04/2024 | TUE  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
+| 11  | 14/04/2024 | SUN  | 4-6 | Layout enemy schedule on all three stages, simplified bosses for 1-st and 2-nd stages      | 4    | Tempo sync in level engine and shooting patterns, made half of level 1, but it should be easy from now on; prepared the rhythm for level 2 and 3; basic HUD; easy mode; fade effects for game screen                                                                                                                   |
+| 12  | 15/04/2024 | MON  | 1-2 | Finish level 1 layout, start level 2                                                       |      |                                                                                                                                                                                                                                                                                                                        |
+| 13  | 16/04/2024 | TUE  | 1-2 | Finish level 2 and level 3 layouts                                                         |      |                                                                                                                                                                                                                                                                                                                        |
 | 14  | 17/04/2024 | WED  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
-| 15  | 18/04/2024 | THU  | 1-2 | Sound effects                                                                              |      |                                                                                                                                                                                                                                                                                                                        |
-| 16  | 19/04/2024 | FRI  | 1-2 | Sound effects                                                                              |      |                                                                                                                                                                                                                                                                                                                        |
+| 15  | 18/04/2024 | THU  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
+| 16  | 19/04/2024 | FRI  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
 | 17  | 20/04/2024 | SAT  | 1-2 | Final touches, submission at 16:00                                                         |      |                                                                                                                                                                                                                                                                                                                        |
 
 ## Behind the schedule

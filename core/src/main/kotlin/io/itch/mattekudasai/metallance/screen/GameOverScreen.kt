@@ -22,7 +22,8 @@ import ktx.app.clearScreen
 import ktx.graphics.use
 
 class GameOverScreen(
-    val continueGame: () -> Unit,
+    val showEasyMode: Boolean,
+    val continueGame: (easyMode: Boolean) -> Unit,
     val showTitle: () -> Unit
 ) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
@@ -33,8 +34,8 @@ class GameOverScreen(
     private val music: Music by remember { Gdx.audio.newMusic("music/title.ogg".overridable) }
     private var musicShouldBeResumed = false
     private var internalTimer = 0f
-    private var selection = 0
-    private val menuItems = listOf("CONTINUE", "MAIN MENU")
+    private var selection = if (showEasyMode) 1 else 0
+    private val menuItems = listOf("EASY MODE".takeIf { showEasyMode }, "CONTINUE", "MAIN MENU").filterNotNull()
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
@@ -50,6 +51,7 @@ class GameOverScreen(
 
     init {
         music.play()
+        music.volume = 0.1f
         music.isLooping = true
     }
     override fun render(delta: Float) {
@@ -94,13 +96,14 @@ class GameOverScreen(
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
             music.stop()
             when (selection) {
-                0 -> continueGame()
-                1 -> showTitle()
+                0 -> continueGame(showEasyMode)
+                1 -> if (showEasyMode) continueGame(false) else showTitle()
+                2 ->  showTitle()
             }
         } else if (keycode.isUp) {
-            selection = (selection + 1) % menuItems.size
-        } else if (keycode.isDown) {
             selection = (selection + menuItems.size - 1) % menuItems.size
+        } else if (keycode.isDown) {
+            selection = (selection + 1) % menuItems.size
         }
         return true
     }

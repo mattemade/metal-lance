@@ -28,12 +28,28 @@ class Level(
 
     private val lines = scriptFile.reader().readLines()
     private val repeaters = mutableListOf<DelayedRepeater>()
-    private val eternalRepeaters = mutableListOf<DelayedRepeater>()
+    private val metaRepeaters = mutableListOf<DelayedRepeater>()
     private var currentIndex = 0
     private var waitTime = 0f
+    private var spawnedEnemies: Int = 0
+    private var waitingDefeated = false
     private var nextValidIndex = 0
+    private var musicTempo = 120f
+    private var internalTimer = 0f
 
     fun update(delta: Float) {
+        internalTimer += delta
+        if (waitingDefeated) {
+            if (spawnedEnemies == 0) {
+                waitingDefeated = false
+                waitTime -= internalTimer % waitTime
+                /* metaRepeaters.removeAll { !it.update(delta) }
+                 repeaters.removeAll { !it.update(delta) }*/
+            } else {
+                return
+            }
+            return
+        }
         waitTime -= delta
         while (waitTime < 0f && currentIndex < lines.size) {
             if (currentIndex < nextValidIndex) {
@@ -49,7 +65,10 @@ class Level(
                 "setting" -> setBackground(split.getString(1))
                 "mode" -> setRenderMode(split.getInt(1), split.getInt(2))
                 "music" -> when (split.getString(1)) {
-                    "play" -> playMusic(split.getString(2), split.getFloat(3))
+                    "play" -> {
+                        playMusic(split.getString(2), split.getFloat(3))
+                        musicTempo = split.getFloat(4, 120f)
+                    }
                 }
 
                 "tint" -> setTint(Color(split.getFloat(1), split.getFloat(2), split.getFloat(3), 1f))
@@ -62,25 +81,30 @@ class Level(
                 )
 
                 "spawn" -> prepareSpawner(split)
-                "repeat" -> prepareEternalSpawner(split)
+                "repeat" -> prepareSpawnerRepeater(split)
                 "wait" -> waitTime += split.getFloat(1)
+                "waitdefeated" -> {
+                    waitTime = split.getFloat(1) // this id MOD for internal timer, not the time really!!
+                    waitingDefeated = true
+                }
                 "end" -> endSequence()
             }
         }
 
-        eternalRepeaters.forEach { it.update(delta) }
+        metaRepeaters.removeAll { !it.update(delta) }
         repeaters.removeAll { !it.update(delta) }
     }
 
-    private fun prepareEternalSpawner(split: List<String>) {
+    private fun prepareSpawnerRepeater(split: List<String>) {
         val delayBetweenRepeats = split.getFloat(1)
-        val withinTime = split.getFloat(2)
-        eternalRepeaters += DelayedRepeater(
+        val repeatFor = split.getFloat(2)
+        val withinTime = split.getFloat(3)
+        metaRepeaters += DelayedRepeater(
             nextDelay = { _, _ -> withinTime + delayBetweenRepeats },
             initialDelay = 0f,
             action = { counter, time ->
-                prepareSpawner(split, fromIndex = 2)
-                true
+                prepareSpawner(split, fromIndex = 3)
+                time <= repeatFor
             }
         )
     }
@@ -95,7 +119,7 @@ class Level(
         val sideFactors = split.getString(currentIndex++).split(" ").map {
             it.parseToFloat()
         }
-        val subscription = ShootingPatternSubscription()
+        val subscription = ShootingPatternSubscription { musicTempo }
         var updatePosition = resetPosition()
         var sequence = startSequence()
         var trajectoryIndex = currentIndex
@@ -170,6 +194,7 @@ class Level(
                     leftSide + (rightSide - leftSide) * distance
                 }
                 val health = enemyLine[0].health()
+                spawnedEnemies++
                 spawnEnemy(
                     EnemyConfiguration(
                         enemyType = enemyLine[0] - 'A',
@@ -179,6 +204,9 @@ class Level(
                         updatePositionDt = updatePosition,
                         initialHitPoints = health.first,
                         invincibilityPeriod = health.second,
+                        onRemoved = {
+                            spawnedEnemies--
+                        },
                         onDefeat = {
                             if (--reward.condition <= 0) {
                                 reward.type
@@ -339,6 +367,8 @@ class Level(
             val from = parts.getFloat(0)
             val to = parts.getFloat(1)
             from + Random.nextFloat() * to
+        } else if (this[0] == 'b') {
+            this.substring(1).toFloat() * 60f / musicTempo
         } else {
             this.toFloat()
         }
@@ -368,6 +398,7 @@ class Level(
         val updatePositionDt: Enemy.(time: Float) -> Unit,
         val initialHitPoints: Int,
         val invincibilityPeriod: Float,
+        val onRemoved: () -> Unit,
         val onDefeat: () -> Char?
     )
 
@@ -376,7 +407,7 @@ class Level(
         var condition: Int
     )
 
-    class ShootingPatternSubscription {
+    class ShootingPatternSubscription(val tempoProvider: () -> Float) {
 
         private var activeSubscription: ((Long) -> Unit)? = null
         private var lastKnownPattern: Long = -1

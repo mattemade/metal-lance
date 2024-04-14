@@ -28,12 +28,15 @@ import io.itch.mattekudasai.metallance.util.disposing.mutableDisposableListOf
 import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
 import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
+import io.itch.mattekudasai.metallance.util.drawing.withTransparency
 import io.itch.mattekudasai.metallance.util.files.overridable
 import io.itch.mattekudasai.metallance.util.pixel.intFloat
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
+import kotlin.math.max
+import kotlin.math.min
 
 class GameScreen(
     private val configuration: Configuration,
@@ -46,10 +49,15 @@ class GameScreen(
 ) : KtxScreen,
     KtxInputAdapter, Disposing by Self() {
 
+    private val hudHeight = 8f
+    private val tempReusableColor: Color = Color.WHITE.cpy()
+
     private val flagship: Flagship by remember {
         Flagship(
             viewport.worldWidth,
             viewport.worldHeight,
+            hudHeight,
+            easyMode = configuration.easyMode,
             explosionTexture,
             configuration.livesLeft,
             configuration.power,
@@ -69,7 +77,7 @@ class GameScreen(
     private val energyPods = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val shipUpgrades = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val bombs = mutableDisposableListOf<Bomb>(onDisposed = ::forget).autoDisposing()
-    private val bombsHittedEnemies = mutableMapOf<Shot, Set<Enemy>>()
+
 
     // TODO: pack all the textures in one 2048x2048 atlas to avoid constant rebinding
     private val shotTexture: Texture by remember { Texture("texture/bullet/shot.png".overridable) }
@@ -110,6 +118,11 @@ class GameScreen(
     private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
     private var defeatToWin: Int = Integer.MAX_VALUE
     private var gameOverTimer: Float = 0f
+    private var isGameStarted = false
+    private var isGameEnding = false
+    private var fadingFactor = 1f
+    private var breathingTime = 1f
+    private var maxMusicVolume = 1f
 
     private val level = Level(
         scriptFile = configuration.levelPath.overridable,
@@ -140,7 +153,7 @@ class GameScreen(
                 },
                 when {
                     Align.isTop(enemyConfiguration.spawnSide) -> viewport.worldHeight + enemyTexture.height / 2f
-                    Align.isBottom(enemyConfiguration.spawnSide) -> - enemyTexture.height / 2f
+                    Align.isBottom(enemyConfiguration.spawnSide) -> hudHeight-enemyTexture.height / 2f
                     else -> enemyConfiguration.spawnSideFactor * viewport.worldHeight
                 }
             )
@@ -159,10 +172,14 @@ class GameScreen(
                 },
                 initialHitPoints = enemyConfiguration.initialHitPoints,
                 invincibilityPeriod = enemyConfiguration.invincibilityPeriod,
+                onRemoved = enemyConfiguration.onRemoved,
                 onDefeat = enemyConfiguration.onDefeat,
             ).also { enemy ->
                 enemyConfiguration.shootingPatternSubscription.subscribe {
-                    enemy.shootingPattern = it.toPattern(viewport.worldWidth)
+                    enemy.shootingPattern = it.toPattern(
+                        viewport.worldWidth,
+                        enemyConfiguration.shootingPatternSubscription.tempoProvider
+                    )
                 }
             }
         },
@@ -172,12 +189,7 @@ class GameScreen(
             }
         },
         endSequence = {
-            when (configuration.sequenceEndAction) {
-                EndAction.RETURN_TO_MENU -> {
-                    music?.stop()
-                    returnToMainMenu()
-                }
-            }
+            isGameEnding = true
         },
         setRenderMode = setRenderMode,
         setTint = setTint,
@@ -186,6 +198,7 @@ class GameScreen(
             music = null
             val file = path.overridable
             if (file.exists()) {
+                maxMusicVolume = volume
                 music = Gdx.audio.newMusic(file).autoDisposing().also {
                     it.play()
                     it.volume = volume
@@ -200,7 +213,7 @@ class GameScreen(
     val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
             fontFileName = "texture/font_white.png",
-            alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:",
+            alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:Ж",
             fontLetterWidth = 5,
             fontLetterHeight = 9,
             fontHorizontalSpacing = 1,
@@ -208,7 +221,7 @@ class GameScreen(
             fontHorizontalPadding = 1,
         )
     }
-    val delayedTextDrawer = DelayedTextDrawer(textDrawer, 0.125f)
+    val delayedTextDrawer = DelayedTextDrawer(textDrawer, 0.04f)
     private var music: Music? = null
 
     private fun spawnShot(offsetX: Float = 0f, offsetY: Float = 0f, angleDeg: Float = 0f): Shot =
@@ -306,10 +319,70 @@ class GameScreen(
         if (delta == 0f) {
             music?.pause()
         } else {
-            if (music?.isPlaying == false) {
-                music?.play()
+            if (!isGameStarted) {
+                fadingFactor -= delta
+                if (fadingFactor < 0f) {
+                    fadingFactor = 0f
+                    isGameStarted = true
+                }
             }
-            updateGameState(delta)
+            if (flagship.isAlive) {
+                level.update(delta) // should be updated regardless of the game state
+            }
+            if (isGameStarted) {
+                music?.let {
+                    if (!it.isPlaying) {
+                        it.play()
+                    }
+                }
+                updateGameState(delta)
+            }
+            if (isGameEnding) {
+                fadingFactor += delta
+                if (fadingFactor > 1f) {
+                    breathingTime = max(0f, breathingTime - delta)
+                    fadingFactor = 1f
+                }
+                music?.volume = maxMusicVolume * ((1f - fadingFactor) + breathingTime / 2f) / 1.5f
+                if (fadingFactor == 1f && breathingTime <= 0f) {
+                    music?.stop()
+                    music = null
+                    if (defeatToWin == 0) {
+                        advance(
+                            configuration.copy(
+                                livesLeft = flagship.lives,
+                                power = flagship.power,
+                                charge = flagship.charge,
+                                shipType = flagship.shipType,
+                                usedContinue = false,
+                                passedPreviousLevel = true,
+                            )
+                        )
+                    } else if (!flagship.isAlive) {
+                        showGameOver(configuration)
+                    } else if (isRestarting) {
+                        restart()
+                    } else {
+                        when (configuration.sequenceEndAction) {
+                            EndAction.RETURN_TO_MENU -> {
+                                returnToMainMenu()
+                            }
+
+                            EndAction.NEXT_LEVEL -> advance(
+                                configuration.copy(
+                                    livesLeft = flagship.lives,
+                                    power = flagship.power,
+                                    charge = flagship.charge,
+                                    shipType = flagship.shipType,
+                                    usedContinue = false,
+                                    passedPreviousLevel = true,
+                                )
+                            )
+                        }
+
+                    }
+                }
+            }
         }
 
         if (totalGameTime == 0f) {
@@ -320,6 +393,9 @@ class GameScreen(
         viewport.apply(true)
         environmentRenderer.renderBackground(viewport, camera, totalGameTime, flagship.internalPosition)
         batch.use(camera) { batch ->
+            powerUps.forEach { it.draw(batch) }
+            energyPods.forEach { it.draw(batch) }
+            shipUpgrades.forEach { it.draw(batch) }
             enemyShots.forEach { it.draw(batch) }
             enemies.forEach {
                 if (it.isAlive && (!it.isInvincible || !evenFrame)) {
@@ -335,9 +411,6 @@ class GameScreen(
                 }
             }
             shots.forEach { it.draw(batch) }
-            powerUps.forEach { it.draw(batch) }
-            energyPods.forEach { it.draw(batch) }
-            shipUpgrades.forEach { it.draw(batch) }
             //bombs.forEach { it.draw(batch) }
             if (!flagship.isInvincible || evenFrame) {
                 flagship.draw(batch)
@@ -348,17 +421,59 @@ class GameScreen(
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
             it.color = Color.WHITE
             // using 0.5f because otherwise the left bottom corner is not covered somewhy
-            it.rect(0.5f, 0.5f, (viewport.worldWidth - 1f).intFloat, (viewport.worldHeight - 1f).intFloat)
+            it.rect(0.5f, hudHeight + 0.5f, (viewport.worldWidth - 1f).intFloat, (viewport.worldHeight - 1f - hudHeight).intFloat)
+        }
+        // hud
+        shapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) {
+            it.color = Color.BLACK
+            it.rect(0.5f, 0.5f, viewport.worldWidth + 2f, hudHeight)
+        }
+        batch.use(camera) {
+            // lives
+            textDrawer.drawText(it, listOf("Ж${if (configuration.easyMode) 99 else min(max(0, flagship.lives), 99)}"), 58f, -11f)
+            // power
+            it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
+            textDrawer.drawText(it, listOf("POWER"), 85f, -11f)
+            it.color = Color.WHITE
+            textDrawer.drawText(it, listOf("POWER"), 85f, -11f, characterLimit = (flagship.power * 5f).toInt())
+
+            // ship type
+            textDrawer.drawText(it, listOf(
+                when (flagship.shipType) {
+                    0 -> "NORMAL"
+                    1 -> "DOUBLE"
+                    2 -> "TRIPLE"
+                    3 -> "QUADRU"
+                    4 -> "QUINTU"
+                    else -> "METAL"
+                }), 124f, -11f)
+
+            // lance charge
+            it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
+            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f)
+            it.color = Color.WHITE
+            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f, characterLimit = (flagship.charge * 5f).toInt())
+
+
+        }
+
+        if (fadingFactor > 0f) {
+            withTransparency {
+                shapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) {
+                    it.color = tempReusableColor.set(0f, 0f, 0f, fadingFactor)
+                    it.rect(-1f, -1f, viewport.worldWidth + 2f, viewport.worldHeight + 2f)
+                }
+            }
         }
     }
 
     private fun updateGameState(delta: Float) {
-        level.update(delta)
         flagship.update(delta)
         //enemySpawner.update(delta)
         enemies.removeAll { enemy ->
             enemy.update(delta)
             if (enemy.shouldBeRemoved) {
+                enemy.onRemoved()
                 return@removeAll true
             }
             if (enemy.isAlive && !enemy.isInvincible) {
@@ -383,7 +498,7 @@ class GameScreen(
                     enemy.offscreenTimeToDisappear = Enemy.DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR
                 }
             }
-            enemy.offscreenTimeToDisappear <= 0f
+            (enemy.offscreenTimeToDisappear <= 0f).also { if (it) enemy.onRemoved() }
         }
         enemyShots.removeAll { enemyShot ->
             enemyShot.update(delta)
@@ -415,15 +530,7 @@ class GameScreen(
                     enemy.explodeAndSpawnReward()
                     defeatToWin -= 1
                     if (defeatToWin == 0) {
-                        music?.stop()
-                        advance(
-                            configuration.copy(
-                                livesLeft = flagship.lives,
-                                power = flagship.power,
-                                charge = flagship.charge,
-                                shipType = flagship.shipType,
-                            )
-                        )
+                        isGameEnding = true
                     }
                     break
                 }
@@ -436,11 +543,15 @@ class GameScreen(
         bombs.removeAll { !it.update(delta) }
 
         if (!flagship.isAlive) {
+            music?.let {
+                it.stop()
+                music = null
+            }
             if (gameOverTimer > 0f) {
                 gameOverTimer -= delta
             } else {
-                music?.stop()
-                showGameOver(configuration)
+                breathingTime = 0f
+                isGameEnding = true
             }
         }
     }
@@ -522,10 +633,20 @@ class GameScreen(
         viewport.setScreenSize(width, height)
     }
 
+    private var isRestarting = false
     override fun keyDown(keycode: Int): Boolean {
         if (Gdx.app.logLevel == Application.LOG_DEBUG) {
             if (keycode == Keys.R) {
-                restart()
+                isRestarting = true
+                isGameEnding = true
+            } else if (keycode == Keys.N) {
+                music?.stop()
+                music = null
+                returnToMainMenu()
+            } else if (keycode == Keys.M) {
+                music?.stop()
+                music = null
+                advance(configuration)
             }
         }
         return flagship.keyDown(keycode)
@@ -537,14 +658,18 @@ class GameScreen(
 
     data class Configuration(
         val levelPath: String,
-        val sequenceEndAction: EndAction = EndAction.RETURN_TO_MENU,
+        val sequenceEndAction: EndAction = EndAction.NEXT_LEVEL,
         var livesLeft: Int = 3,
         var power: Float = 0f,
         var charge: Float = 0f,
         var shipType: Int = 0,
+        var usedContinue: Boolean = false,
+        var passedPreviousLevel: Boolean = false,
+        var easyMode: Boolean = false,
     )
 
     enum class EndAction {
-        RETURN_TO_MENU
+        RETURN_TO_MENU,
+        NEXT_LEVEL,
     }
 }

@@ -9,6 +9,7 @@ import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.screen.IntroScreen
 import io.itch.mattekudasai.metallance.screen.OutroScreen
 import io.itch.mattekudasai.metallance.screen.TitleScreen
+import io.itch.mattekudasai.metallance.screen.TurnOffEasyModeScreen
 import io.itch.mattekudasai.metallance.util.pixel.PixelPerfectScreen
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
@@ -22,7 +23,9 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         if (false) {
             showGameScreen(
                 GameScreen.Configuration(
-                    levelPath = "levels/stage1.txt"
+                    levelPath = "levels/stage1.txt",
+                    sequenceEndAction = GameScreen.EndAction.NEXT_LEVEL,
+                    livesLeft = 0//Int.MAX_VALUE,
                 )
             )
         } else {
@@ -47,7 +50,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
             startGame = {
                 showGameScreen(
                     GameScreen.Configuration(
-                        levelPath = "levels/stage1.txt"
+                        levelPath = "levels/stage1.txt",
                     )
                 )
             }
@@ -69,11 +72,12 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                     showGameOver(it)
                 },
                 advance = {
-                    when (it.levelPath) {
-                        "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
-                        "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
-                        "levels/stage3.txt" -> showOutro()
+                    if (it.easyMode) {
+                        showTurnOffEasyMode(it)
+                    } else {
+                        startNextLevel(it)
                     }
+
                 },
                 restart = {
                     showGameScreen(configuration)
@@ -82,16 +86,36 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         )
     }
 
+    private fun startNextLevel(it: GameScreen.Configuration) {
+        when (it.levelPath) {
+            "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
+            "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
+            "levels/stage3.txt" -> showOutro()
+            "levels/tutorial.txt" -> showTitle()
+        }
+    }
+
     private fun showGameOver(configuration: GameScreen.Configuration) {
         switchToScreen(GameOverScreen(
-            continueGame = {
+            showEasyMode = configuration.usedContinue,
+            continueGame = { easyMode ->
                 showGameScreen(
                     GameScreen.Configuration(
                         levelPath = configuration.levelPath,
+                        usedContinue = true,
+                        easyMode = easyMode,
                     )
                 )
             },
             showTitle = { showTitle() }
+        ))
+    }
+
+    private fun showTurnOffEasyMode(configuration: GameScreen.Configuration) {
+        switchToScreen(TurnOffEasyModeScreen(
+            apply = { easyMode ->
+                startNextLevel(configuration.copy(easyMode = easyMode))
+            },
         ))
     }
 

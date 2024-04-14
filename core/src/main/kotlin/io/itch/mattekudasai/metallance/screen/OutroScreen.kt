@@ -116,7 +116,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     }
 
     companion object {
-        private const val characterTime = 0.125f
+        private const val characterTime = 0.04f
         private val lines = """
         Congratulations
 

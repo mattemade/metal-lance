@@ -12,6 +12,7 @@ class Enemy(
     private val shot: (Enemy) -> Unit,
     private val initialHitPoints: Int = 1,
     private val invincibilityPeriod: Float = 0f,
+    val onRemoved: () -> Unit,
     private val onDefeat: () -> Char?,
 ) : SimpleSprite(texture) {
 

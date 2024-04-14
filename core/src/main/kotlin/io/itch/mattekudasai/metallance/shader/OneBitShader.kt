@@ -141,7 +141,7 @@ object OneBitShader {
                 if (color.r == 0.0 && color.g == 0.0 && color.b == 0.0 || color.r == 1.0 && color.g == 1.0 && color.b == 1.0) {
                   gl_FragColor = color * tint;
                 } else {
-                  float result = rand(fragCoord) > (1.0 - pow(gray, 2)) ? 1.0 : 0.0;
+                  float result = rand(fragCoord) > (1.0 - gray*gray) ? 1.0 : 0.0;
                   gl_FragColor = vec4(result, result, result, 1.0) * tint;
                 }
                 return;

@@ -22,6 +22,8 @@ import kotlin.math.min
 class Flagship(
     private val worldWidth: Float,
     private val worldHeight: Float,
+    private val hudHeight: Float,
+    private val easyMode: Boolean,
     private val explosionTexture: Texture,
     private val initialLivesLeft: Int,
     private val initialPower: Float,
@@ -145,8 +147,8 @@ class Flagship(
             } else if (x > worldWidth - halfWidth) {
                 x = worldWidth - halfWidth
             }
-            if (y < halfHeight) {
-                y = halfHeight
+            if (y < hudHeight + halfHeight) {
+                y = hudHeight + halfHeight
             } else if (y > worldHeight - halfHeight) {
                 y = worldHeight - halfHeight
             }
@@ -166,7 +168,7 @@ class Flagship(
     }
 
     fun powerUp() {
-        power = min(1f, power + 1f / ((shipType + 1) * 5f))
+        power = min(1f, power + 1f / (/*(shipType + 1) **/ 5f))
     }
 
     fun chargeUp() {
@@ -175,7 +177,7 @@ class Flagship(
 
     fun transform() {
         val oldShipType = shipType++
-        if (oldShipType != shipType) {
+        if (!easyMode && oldShipType != shipType) {
             power = 0f
         }
     }
@@ -190,16 +192,19 @@ class Flagship(
     }
 
     fun startOver(): Boolean {
-        if (--lives < 0) {
-            explode()
-            return false
+        if (!easyMode) {
+            if (--lives < 0) {
+                explode()
+                return false
+            }
         }
         isAlive = true
-        shipType = 0
+        if (!easyMode) {
+            shipType = 0
+            power = 0f
+            charge = 0f
+        }
         timeToStartOver = 2f
-        //state.position.set(40f, worldHeight / 2f)
-        power = 0f
-        charge = 0f
         return true
     }
 

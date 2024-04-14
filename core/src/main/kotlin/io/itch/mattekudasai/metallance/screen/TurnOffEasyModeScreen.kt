@@ -21,28 +21,22 @@ import ktx.app.KtxScreen
 import ktx.app.clearScreen
 import ktx.graphics.use
 
-class TitleScreen(
-    val startTutorial: () -> Unit,
-    val startGame: () -> Unit
+class TurnOffEasyModeScreen(
+    val apply: (easyMode: Boolean) -> Unit,
 ) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
-    private val metalTexture: Texture by remember { Texture("texture/title/metal.png".overridable) }
-    private val lanceTexture: Texture by remember { Texture("texture/title/lance.png".overridable) }
-    private val weaponTexture: Texture by remember { Texture("texture/title/weapon.png".overridable) }
     private val shipTexture: Texture by remember { Texture("texture/ship/normal.png".overridable) }
-    private val music: Music by remember { Gdx.audio.newMusic("music/title.ogg".overridable) }
-    private var musicShouldBeResumed = false
     private var internalTimer = 0f
-    private var selection = 1
-    private val menuItems = listOf("TUTORIAL", "START GAME")
+    private var selection = 0
+    private val menuItems = listOf("TURN OFF", "KEEP EASY")
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
             fontFileName = "texture/font_white.png",
-            alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:",
+            alphabet = ('A'..'Z').joinToString(separator = "") + ".,'0123456789:Ж?",
             fontLetterWidth = 5,
             fontLetterHeight = 9,
             fontHorizontalSpacing = 1,
@@ -51,30 +45,13 @@ class TitleScreen(
         )
     }
 
-    init {
-        music.play()
-        music.volume = 0.1f
-        music.isLooping = true
-    }
     override fun render(delta: Float) {
         internalTimer += delta
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
-        if (delta == 0f) {
-            if (music.isPlaying) {
-                music.pause()
-                musicShouldBeResumed = true
-            }
-        } else if (musicShouldBeResumed) {
-            music.play()
-            musicShouldBeResumed = false
-        }
-
         viewport.apply(true)
         batch.use(camera) {
-            it.drawTitleTexture(weaponTexture)
-            it.drawTitleTexture(lanceTexture)
-            it.drawTitleTexture(metalTexture)
+            textDrawer.drawText(it, listOf("TURN OFF EASY MODE?"), viewport.worldWidth / 2f, viewport.worldHeight * 0.8f, Align.top)
             val menuGoesFrom = viewport.worldHeight / 3f
             menuItems.forEachIndexed { index, item ->
                 val itemY = menuGoesFrom - index * 32f
@@ -88,16 +65,6 @@ class TitleScreen(
         super.render(delta)
     }
 
-    private fun SpriteBatch.drawTitleTexture(texture: Texture) {
-
-        val width = texture.width
-        val height = texture.height
-        val widthFloat = width.toFloat()
-        val heightFloat = height.toFloat()
-        draw(texture, ((viewport.worldWidth - widthFloat) / 2f).toInt().toFloat(), (viewport.worldHeight * 0.75f).toInt().toFloat(), widthFloat, heightFloat, 0, 0, width, height, false, false)
-
-    }
-
     override fun resize(width: Int, height: Int) {
         viewport.setWorldSize(width.toFloat(), height.toFloat())
         viewport.setScreenSize(width, height)
@@ -108,15 +75,14 @@ class TitleScreen(
             return false
         }
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
-            music.stop()
             when (selection) {
-                0 -> startTutorial()
-                1 -> startGame()
+                0 -> apply(false)
+                1 -> apply(true)
             }
         } else if (keycode.isUp) {
-            selection = (selection + menuItems.size - 1) % menuItems.size
-        } else if (keycode.isDown) {
             selection = (selection + 1) % menuItems.size
+        } else if (keycode.isDown) {
+            selection = (selection + menuItems.size - 1) % menuItems.size
         }
         return true
     }

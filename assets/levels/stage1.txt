@@ -1,30 +1,205 @@
+tint  1.0  1.0  0.9
 setting  city
-#goto  35
-#goal  kill  20
-music  play  music/stage1.ogg  0.1
+music  play  music/stage1.ogg  0.1  128.5714
+
+wait  b3
 text  STAGE 1\RUINED CITY  0.5  0.8
-wait  2
-spawn  3  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 40
-wait  2
+wait  b1
+#goto  51
+# quick intro of b4 is skipped by text
+
+# normal melody
+spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 40
+wait  b4
 text
-wait  1
-spawn  3  BB BB BB  pall  right  0.3  sin bottom 0 1.7 10  lin left 40
-wait  4
-spawn  3  BB BB BB  eall  bottom  0.9 0.5  lin top 40
-wait  4
-spawn  3  BB BB BB  eall  top  0.3 0.6  lin bottom 40
-wait  4
-spawn  0  CD  peach  right  0.4  lin left 30  sin bottom 0 1 40
-wait  3
-spawn  3  CD BB BB BB  pall  right  0.6 0.3  lin left 40  sin top 0 1 40
-wait  6
-spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.05 0.8  lin left 80
-wait  3
-spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.95 0.2  lin left 80
-wait  5
-spawn  0  BD BD BD BD BD BD BD BD BD  none  top  0.05 0.95  sin bottom 0 3 80  lin top 40
-wait  1
-spawn  0  BD BD BD BD BD BD BD BD BD  none  bottom  0.05 0.95  sin top 0 3 80  lin bottom 40
+wait  b4
+spawn  b6  BB BB BB  pall  right  0.3  sin bottom 0 1.7 10  lin left 40
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  eall  bottom  0.9 0.5  lin top 40
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  eall  top  0.3 0.6  lin bottom 40
+wait  b4
+wait  b4
+
+# bass
+spawn  0  CD  peach  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b4
+spawn  b6  BB BB BB  eall  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b4
+wait  b4
+wait  b4
+spawn  b8  CD BB BB BB  pall  right  0.6 0.3  lin left 40  sin top 0 1 40
+wait  b4
+wait  b4
+spawn  0  BB BB  none  left  0.2 0.8  lin right 100
+wait  b4
+spawn  b0.6  BCF BCF BCF BCF BCF BCF BCF  none  top  0.11765 0.95  sin bottom 0 3 80  lin top 40
+wait  b2
+spawn  b0.6  BCF BCF BCF BCF BCF BCF BCF  none  bottom  0.0588 0.88235  sin top 0 3 80  lin bottom 40
+wait  b2
+
+# normal melody, suspension
+goto  53
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 80
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  pall  right  0.3  sin bottom 0 1.7 10  lin left 80
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  eall  bottom  0.9 0.5  lin top 80
+wait  b4
+wait  b4
+spawn  b6  BB BB BB  eall  top  0.3 0.6  lin bottom 80
+wait  b4
+wait  b4
+
+# climatic
+spawn  0  DB3S  seach  right  0.5  for b2  move 0.8 0.5  after b4  for b2  move 0.5 0.8  after b4  for b2  move 0.2 0.5  after b4  for b2  move 0.5 0.2  after b4  for b2  move 0.8 0.5  after b4  move 0.8 0.5  after b4  lin left 64  sin top 0 b8 20
+waitdefeated  b4
+wait  b8
+end
+wait  b8
+
+
+# TODO: that's the real continue after previous spawn
+wait  b4  # right
+wait  b4  # top
+wait  b4  # left
+wait  b4  # bottom
+wait  b4  # right
+wait  b4  # wait
+wait  b4  # move
+wait  b4
+
+
+wait  b4
+end
+
+
+# part 2
+
+# quick intro
+spawn  b4  CD BB BB BB  pall  right  0.3  lin left 80
+wait  b4
+
+# melody
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# bass
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4 // two b2 sequences
+
+# normal melody, suspensing
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# climatic
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+
+# run boss
+
+
+
+wait  b0.8  # just to sync slow mobs
+spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 40
+wait  b2
+text
+wait  b6
+spawn  b6  BB BB BB  pall  right  0.3  sin bottom 0 1.7 10  lin left 40
+wait  b8
+spawn  b6  BB BB BB  eall  bottom  0.9 0.5  lin top 40
+wait  b8
+spawn  b6  BB BB BB  eall  top  0.3 0.6  lin bottom 40
+wait  b8
+spawn  0  CD  peach  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b4
+spawn  b6  BB BB BB  eall  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b8
+wait  b1
+spawn  b2  BB BB  none  right  0.4  lin left 60
+wait  b3
+spawn  b8  CD BB BB BB  pall  right  0.6 0.3  lin left 40  sin top 0 1 40
+wait  b8
+spawn  0  BB BB  none  left  0.2 0.8  lin right 100
+wait  b4
+
+wait  b1
+spawn  b1  BD BD BD BD BD BD BD  none  top  0.05 0.95  sin bottom 0 3 80  lin top 40
+wait  b2
+spawn  b1  BD BD BD BD BD BD BD  none  bottom  0.05 0.95  sin top 0 3 80  lin bottom 40
+wait  b1
+
+b4
+b4
+b4
+b4
+b4
+b4
+
+# transition
+b4
+b4
+
+# climatic
+b4
+b4
+b4
+b4
+b4
+b4
+b4
+b4
+
+# intro
+b4
+
+
+wait  b8
+#wait  b8
+#spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.05 0.8  lin left 80
+#wait  b8
+#spawn  2  C0 C0 C0 C0 C0 C0 C0 C0 C0 C0 C0  none  right  0.95 0.2  lin left 80
+wait  b2
+spawn  b2  BD BD BD BD BD BD BD BD BD  none  top  0.05 0.95  sin bottom 0 3 80  lin top 40
+wait  b2
+spawn  b2  BD BD BD BD BD BD BD BD BD  none  bottom  0.05 0.95  sin top 0 3 80  lin bottom 40
 wait  2
 spawn  0  CD  peach  left  0.3  lin right 40
 spawn  0  CD  peach  right  0.7  lin left 40

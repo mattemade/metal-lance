@@ -2,18 +2,18 @@ setting  simulation
 tint  0.8  1.0  0.8
 wait  1
 text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
-wait  8
-text  MOVE WITH WASD\OR ARROWS  0.5  0.8
 wait  5
+text  MOVE WITH WASD\OR ARROWS  0.5  0.8
+wait  3
 text  HOLD K OR Z TO ATTACK  0.5  0.8
 tint  0.8  1.0  0.8
-wait  8
+wait  3
 text  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
 wait  1
 tint  0.8  0.2  0.2
 wait  0.1
 tint  0.8  1.0  0.8
-wait  4
+wait  2
 tint  0.8  0.2  0.2
 wait  0.1
 tint  0.8  1.0  0.8
@@ -23,8 +23,8 @@ wait  2
 tint  0.8  0.2  0.2
 wait  0.1
 tint  0.8  1.0  0.8
-repeat  2  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  4
+repeat  2  1000  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  2
 tint  0.8  0.2  0.2
 wait  0.1
 tint  0.8  1.0  0.8
@@ -32,11 +32,11 @@ wait  2
 text  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
 #wait  8
 #text  ONCE CHARGED, HOLD J OR X\TO PIERCE THROUGH  0.5  0.8
-wait  9
+wait  5
 text  GOOD LUCK  0.5  0.8
 wait  2
 tint  0.8  0.2  0.2
-repeat  1  0  AB  eeach  right  R0.1-0.7  lin left R20-60
+repeat  1  1000  0  AB  eeach  right  R0.1-0.7  lin left R20-60
 wait  6
 tint  0.8  1.0  0.8
 text  TEST RESULT: SUCCESS\FINISHING SIMULATION...  0.5  0.8
