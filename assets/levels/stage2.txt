@@ -8,7 +8,20 @@ wait  b1
 
 # slow intro
 # b4 is already used for text
-spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 100
+#spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 100
+
+spawn  0  BZ  none  right  0.8  lin left 80
+wait  b4
+spawn  0  BZ  none  right  0.8  lin left 80
+wait  b4
+spawn  0  BZ  none  right  0.8  lin left 80
+wait  b4
+spawn  0  BZ  none  right  0.8  lin left 80
+wait  b4
+
+
+
+
 wait  b4
 text
 #####

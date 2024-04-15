@@ -34,7 +34,8 @@ class Level(
     private var spawnedEnemies: Int = 0
     private var waitingDefeated = false
     private var nextValidIndex = 0
-    private var musicTempo = 120f
+    var musicTempo = 120f
+        private set
     private var internalTimer = 0f
 
     fun update(delta: Float) {

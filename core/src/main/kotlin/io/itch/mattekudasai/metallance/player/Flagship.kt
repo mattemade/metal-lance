@@ -3,6 +3,7 @@ package io.itch.mattekudasai.metallance.player
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.`object`.Shot
@@ -14,9 +15,12 @@ import io.itch.mattekudasai.metallance.player.Controls.isSlow
 import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.files.overridable
+import io.itch.mattekudasai.metallance.util.sound.playSingleLow
+import java.lang.Math.pow
 import ktx.app.KtxInputAdapter
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 // TODO: think about dynamic world width/height
 class Flagship(
@@ -26,10 +30,11 @@ class Flagship(
     private val easyMode: Boolean,
     private val explosionTexture: Texture,
     private val initialLivesLeft: Int,
-    private val initialPower: Float,
-    private val initialCharge: Float,
+    private val initialPower: Int,
+    private val initialCharge: Int,
     private val initialShipType: Int,
-    private val shot: (shipType: Int) -> Unit
+    private val shot: (shipType: Int) -> Unit,
+    private val tempoProvider: () -> Float,
 ) : SimpleSprite("texture/ship/normal.png"), KtxInputAdapter {
 
     private val state = State(40f, worldHeight / 2f)
@@ -58,13 +63,13 @@ class Flagship(
         }
 
     var lives = initialLivesLeft
-    var power: Float = initialPower // 0 to 1
+    var power: Int = initialPower // 0 to 5
         private set
 
-    var charge: Float = initialCharge
+    var charge: Int = initialCharge
         private set
     private val shootingCooldown: Float
-        get() = (1f - power*0.9f) * SHOOTING_COOLDOWN
+        get() = 60f / tempoProvider() / 2f.pow((power + 1)/2)
     var isAlive = true
       private set
 
@@ -73,6 +78,13 @@ class Flagship(
 
     var slowingTransition: Float = 0f
 
+    private val hitSound: Sound by remember { Gdx.audio.newSound("sound/player_hit.ogg".overridable) }
+    private val explodeSound: Sound by remember { Gdx.audio.newSound("sound/explosion.ogg".overridable) }
+    private val shotSound: Sound by remember { Gdx.audio.newSound("sound/player_shot.ogg".overridable) }
+    private val powerUpSound: Sound by remember { Gdx.audio.newSound("sound/power_up.ogg".overridable) }
+    private val upgradeSound: Sound by remember { Gdx.audio.newSound("sound/upgrade_ship.ogg".overridable) }
+    private val fullPowerSound: Sound by remember { Gdx.audio.newSound("sound/full_power.ogg".overridable) }
+    private val beyondFullPowerSound: Sound by remember { Gdx.audio.newSound("sound/beyond_full_power.ogg".overridable) }
     init {
         shipType = initialShipType
     }
@@ -160,6 +172,7 @@ class Flagship(
 
         if (state.timeFromLastShot > shootingCooldown && state.shooting) {
             state.timeFromLastShot = 0f
+            shotSound.playSingleLow(volume = 1f / 2f.pow(power * 0.3f + 2f))
             shot(shipType)
         }
         state.timeFromLastShot += delta
@@ -168,22 +181,33 @@ class Flagship(
     }
 
     fun powerUp() {
-        power = min(1f, power + 1f / (/*(shipType + 1) **/ 5f))
+        playPowerUpSound(power)
+        power = min(5, power + 1)
     }
 
     fun chargeUp() {
-        charge = min(1f, charge + 0.2f)
+        playPowerUpSound(charge)
+        charge = min(5, charge + 1)
     }
 
+    private fun playPowerUpSound(state: Int) =
+        when (state) {
+            5 -> beyondFullPowerSound
+            4 -> fullPowerSound
+            else -> powerUpSound
+        }.playSingleLow(volume = 0.15f)
+
     fun transform() {
+        upgradeSound.playSingleLow(volume = 0.2f)
         val oldShipType = shipType++
         if (!easyMode && oldShipType != shipType) {
-            power = 0f
+            power = 0
         }
     }
 
     // TODO: maybe reuse is for game over?
     private fun explode() {
+        explodeSound.playSingleLow(volume = 0.2f)
         isAlive = false
         texture = explosionTexture
         setBounds(0f, 0f, explosionTexture.width.toFloat(), explosionTexture.height.toFloat())
@@ -198,11 +222,12 @@ class Flagship(
                 return false
             }
         }
+        hitSound.playSingleLow()
         isAlive = true
         if (!easyMode) {
             shipType = 0
-            power = 0f
-            charge = 0f
+            power = 0
+            charge = 0
         }
         timeToStartOver = 2f
         return true

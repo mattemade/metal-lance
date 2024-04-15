@@ -1,8 +1,10 @@
 package io.itch.mattekudasai.metallance.enemy
 
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
+import io.itch.mattekudasai.metallance.util.sound.playSingleLow
 
 class Enemy(
     texture: Texture,
@@ -14,6 +16,8 @@ class Enemy(
     private val invincibilityPeriod: Float = 0f,
     val onRemoved: () -> Unit,
     private val onDefeat: () -> Char?,
+    private val hitSound: Sound,
+    private val explodeSound: Sound,
 ) : SimpleSprite(texture) {
 
     val internalPosition: Vector2 = initialPosition.cpy()
@@ -23,13 +27,15 @@ class Enemy(
 
     var offscreenTimeToDisappear = DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR
     var hitPoints = initialHitPoints
-      private set
+        private set
     val isAlive
         get() = hitPoints > 0
 
     private var timeToMortal = 0f
     val isInvincible: Boolean
         get() = isAlive && timeToMortal > 0f
+
+    private var lastHitSound = -1L
 
     var shootingPattern: ShootingPattern? = null
         set(value) {
@@ -62,11 +68,17 @@ class Enemy(
         get() = !isAlive && internalTimer <= 0
 
     fun hit(): Char? {
+        if (lastHitSound > -1) {
+            hitSound.stop(lastHitSound)
+            lastHitSound = -1
+        }
         hitPoints -= 1
         if (isAlive) {
             timeToMortal = invincibilityPeriod
+            lastHitSound = hitSound.playSingleLow(lastHitSound, volume = 0.2f)
             return null
         }
+        explodeSound.playSingleLow(volume = 0.15f)
         internalTimer = 0.5f
         texture = explosionTexture
         return onDefeat()

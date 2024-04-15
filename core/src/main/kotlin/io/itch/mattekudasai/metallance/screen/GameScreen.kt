@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.audio.Music
+import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
@@ -31,6 +32,7 @@ import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.drawing.withTransparency
 import io.itch.mattekudasai.metallance.util.files.overridable
 import io.itch.mattekudasai.metallance.util.pixel.intFloat
+import io.itch.mattekudasai.metallance.util.sound.playLow
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
@@ -63,7 +65,8 @@ class GameScreen(
             configuration.power,
             configuration.charge,
             configuration.shipType,
-            ::shoot
+            ::shoot,
+            tempoProvider = { level.musicTempo }
         )
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
@@ -124,6 +127,11 @@ class GameScreen(
     private var breathingTime = 1f
     private var maxMusicVolume = 1f
 
+    private val enemyHitSound: Sound by remember { Gdx.audio.newSound("sound/enemy_hit.ogg".overridable) }
+    private val enemyExplodeSound: Sound by remember { Gdx.audio.newSound("sound/explosion.ogg".overridable) }
+    private val enemyShotSound: Sound by remember { Gdx.audio.newSound("sound/enemy_shot.ogg".overridable) }
+    private var shouldPlayEnemyShot: Boolean = false
+
     private val level = Level(
         scriptFile = configuration.levelPath.overridable,
         setBackground = {
@@ -153,7 +161,7 @@ class GameScreen(
                 },
                 when {
                     Align.isTop(enemyConfiguration.spawnSide) -> viewport.worldHeight + enemyTexture.height / 2f
-                    Align.isBottom(enemyConfiguration.spawnSide) -> hudHeight-enemyTexture.height / 2f
+                    Align.isBottom(enemyConfiguration.spawnSide) -> hudHeight - enemyTexture.height / 2f
                     else -> enemyConfiguration.spawnSideFactor * viewport.worldHeight
                 }
             )
@@ -164,6 +172,7 @@ class GameScreen(
                 initialPosition = initialPosition,
                 updatePositionDt = enemyConfiguration.updatePositionDt,
                 shot = {
+                    shouldPlayEnemyShot = true
                     it.shootingPattern?.onShoot?.invoke(
                         it,
                         flagship.internalPosition,
@@ -174,6 +183,8 @@ class GameScreen(
                 invincibilityPeriod = enemyConfiguration.invincibilityPeriod,
                 onRemoved = enemyConfiguration.onRemoved,
                 onDefeat = enemyConfiguration.onDefeat,
+                hitSound = enemyHitSound,
+                explodeSound = enemyExplodeSound,
             ).also { enemy ->
                 enemyConfiguration.shootingPatternSubscription.subscribe {
                     enemy.shootingPattern = it.toPattern(
@@ -309,10 +320,12 @@ class GameScreen(
     private var totalGameTime = 0f
 
     private var evenFrame = false
+    private var enemyShotSoundCooldown = 0f
 
     override fun render(delta: Float) {
         evenFrame = !evenFrame
         totalGameTime += delta
+        enemyShotSoundCooldown -= delta
 
         clearScreen(red = 0f, green = 0f, blue = 0f)
 
@@ -328,6 +341,13 @@ class GameScreen(
             }
             if (flagship.isAlive) {
                 level.update(delta) // should be updated regardless of the game state
+                if (shouldPlayEnemyShot) {
+                    shouldPlayEnemyShot = false
+                    if (enemyShotSoundCooldown < 0f) {
+                        enemyShotSound.playLow(0.1f)
+                    }
+                    enemyShotSoundCooldown = 0.05f
+                }
             }
             if (isGameStarted) {
                 music?.let {
@@ -421,7 +441,12 @@ class GameScreen(
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
             it.color = Color.WHITE
             // using 0.5f because otherwise the left bottom corner is not covered somewhy
-            it.rect(0.5f, hudHeight + 0.5f, (viewport.worldWidth - 1f).intFloat, (viewport.worldHeight - 1f - hudHeight).intFloat)
+            it.rect(
+                0.5f,
+                hudHeight + 0.5f,
+                (viewport.worldWidth - 1f).intFloat,
+                (viewport.worldHeight - 1f - hudHeight).intFloat
+            )
         }
         // hud
         shapeRenderer.use(ShapeRenderer.ShapeType.Filled, camera) {
@@ -430,31 +455,37 @@ class GameScreen(
         }
         batch.use(camera) {
             // lives
-            textDrawer.drawText(it, listOf("Ж${if (configuration.easyMode) 99 else min(max(0, flagship.lives), 99)}"), 58f, -11f)
+            textDrawer.drawText(
+                it,
+                listOf("Ж${if (configuration.easyMode) 99 else min(max(0, flagship.lives), 99)}"),
+                58f,
+                -11f
+            )
             // power
             it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
             textDrawer.drawText(it, listOf("POWER"), 85f, -11f)
             it.color = Color.WHITE
-            textDrawer.drawText(it, listOf("POWER"), 85f, -11f, characterLimit = (flagship.power * 5f).toInt())
+            textDrawer.drawText(it, listOf("POWER"), 85f, -11f, characterLimit = flagship.power)
 
             // ship type
-            textDrawer.drawText(it, listOf(
-                when (flagship.shipType) {
-                    0 -> "NORMAL"
-                    1 -> "DOUBLE"
-                    2 -> "TRIPLE"
-                    3 -> "QUADRU"
-                    4 -> "QUINTU"
-                    else -> "METAL"
-                }), 124f, -11f)
+            textDrawer.drawText(
+                it, listOf(
+                    when (flagship.shipType) {
+                        0 -> "NORMAL"
+                        1 -> "DOUBLE"
+                        2 -> "TRIPLE"
+                        3 -> "QUADRU"
+                        4 -> "QUINTU"
+                        else -> "METAL"
+                    }
+                ), 124f, -11f
+            )
 
             // lance charge
             it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
             textDrawer.drawText(it, listOf("LANCE"), 169f, -11f)
             it.color = Color.WHITE
-            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f, characterLimit = (flagship.charge * 5f).toInt())
-
-
+            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f, characterLimit = flagship.charge)
         }
 
         if (fadingFactor > 0f) {
@@ -598,7 +629,6 @@ class GameScreen(
                     advance(configuration)
                 }
             }
-
         }
     }
 
@@ -660,8 +690,8 @@ class GameScreen(
         val levelPath: String,
         val sequenceEndAction: EndAction = EndAction.NEXT_LEVEL,
         var livesLeft: Int = 3,
-        var power: Float = 0f,
-        var charge: Float = 0f,
+        var power: Int = 0,
+        var charge: Int = 0,
         var shipType: Int = 0,
         var usedContinue: Boolean = false,
         var passedPreviousLevel: Boolean = false,
