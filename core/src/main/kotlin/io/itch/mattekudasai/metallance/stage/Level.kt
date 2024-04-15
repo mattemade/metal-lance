@@ -43,7 +43,9 @@ class Level(
         if (waitingDefeated) {
             if (spawnedEnemies == 0) {
                 waitingDefeated = false
-                waitTime -= internalTimer % waitTime
+                if (waitTime > 0f) {
+                    waitTime -= internalTimer % waitTime
+                }
                 /* metaRepeaters.removeAll { !it.update(delta) }
                  repeaters.removeAll { !it.update(delta) }*/
             } else {

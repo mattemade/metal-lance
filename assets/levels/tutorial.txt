@@ -2,43 +2,37 @@ setting  simulation
 tint  0.8  1.0  0.8
 wait  1
 text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
-wait  5
+wait  3
 text  MOVE WITH WASD\OR ARROWS  0.5  0.8
-wait  3
-text  HOLD K OR Z TO ATTACK  0.5  0.8
-tint  0.8  1.0  0.8
-wait  3
+wait  4
 text  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
-wait  1
-tint  0.8  0.2  0.2
-wait  0.1
-tint  0.8  1.0  0.8
-wait  2
-tint  0.8  0.2  0.2
-wait  0.1
-tint  0.8  1.0  0.8
-wait  2
-text  AVOID HAZARDS  0.5  0.8
-wait  2
-tint  0.8  0.2  0.2
-wait  0.1
-tint  0.8  1.0  0.8
-repeat  2  1000  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  2
-tint  0.8  0.2  0.2
-wait  0.1
-tint  0.8  1.0  0.8
-wait  2
+wait  4
+text  HOLD K OR Z TO ATTACK  0.5  0.8
+wait  4
+text  DEFEAT ENEMIES  0.5  0.8
+spawn  0  A0 A0 A0  eeach  right  0.3 0.6  for 2  lin left 40
+waitdefeated  1
 text  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
-#wait  8
-#text  ONCE CHARGED, HOLD J OR X\TO PIERCE THROUGH  0.5  0.8
-wait  5
-text  GOOD LUCK  0.5  0.8
+wait  4
+text  HOLD J OR X TO PERFORM\THE LANCE STRIKE  0.5  0.8
+wait  4
+text  PEIRCE THROUGH ENEMIES  0.5  0.8
+spawn  3  A0 A0 A0 A0 A0  eeach  right  0.5  lin left 40
 wait  2
-tint  0.8  0.2  0.2
-repeat  1  1000  0  AB  eeach  right  R0.1-0.7  lin left R20-60
-wait  6
+waitdefeated  1
+text  AVOID HAZARDS AND GOOD LUCK  0.5  0.8
+wait  2
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  1
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  1
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  1
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  1
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  3
 tint  0.8  1.0  0.8
-text  TEST RESULT: SUCCESS\FINISHING SIMULATION...  0.5  0.8
-wait  8
+text  TEST RESULT: SUCCESS\FINISHING SIMULATION  0.5  0.8
+wait  6
 end

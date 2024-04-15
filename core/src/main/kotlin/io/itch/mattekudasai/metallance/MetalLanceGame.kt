@@ -25,7 +25,6 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                 GameScreen.Configuration(
                     levelPath = "levels/stage1.txt",
                     sequenceEndAction = GameScreen.EndAction.NEXT_LEVEL,
-                    livesLeft = 0//Int.MAX_VALUE,
                 )
             )
         } else {

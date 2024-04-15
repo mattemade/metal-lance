@@ -9,7 +9,7 @@ wait  b1
 # quick intro of b4 is skipped by text
 
 # normal melody
-spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 40
+spawn  b6  BB BB BB  sall  right  0.7  sin top 0 1.7 10  lin left 40
 wait  b4
 text
 wait  b4
@@ -30,7 +30,7 @@ spawn  b6  BB BB BB  eall  right  0.4  lin left 40  sin bottom 0 1 40
 wait  b4
 wait  b4
 wait  b4
-spawn  b8  CD BB BB BB  pall  right  0.6 0.3  lin left 40  sin top 0 1 40
+spawn  b8  CD BB BB BB  sall  right  0.6 0.3  lin left 40  sin top 0 1 40
 wait  b4
 wait  b4
 spawn  0  BB BB  none  left  0.2 0.8  lin right 100
@@ -64,7 +64,7 @@ wait  b4
 wait  b4
 
 # climatic
-spawn  0  DB3S  seach  right  0.5  for b2  move 0.8 0.5  after b4  for b2  move 0.5 0.8  after b4  for b2  move 0.2 0.5  after b4  for b2  move 0.5 0.2  after b4  for b2  move 0.8 0.5  after b4  move 0.8 0.5  after b4  lin left 64  sin top 0 b8 20
+spawn  0  DB3SF  Seach  right  0.5  for b2  move 0.8 0.5  after b4  for b2  move 0.5 0.8  after b4  for b2  move 0.2 0.5  after b4  for b2  move 0.5 0.2  after b4  for b2  move 0.8 0.5  after b4  move 0.8 0.5  after b4  lin left 64  sin top 0 b8 20
 waitdefeated  b4
 wait  b8
 end
@@ -208,8 +208,8 @@ spawn  0  BB BB  eall  left  0.2 0.4  lin right 40
 spawn  0  BB BB  eall  right  0.6 0.8  lin left 40
 wait  5
 wait  1
-#spawn  0  DB3S  seach  right  0.5  for 1  move 0.5 0.5  after 2  for 10  sin left 0 1 80  sin top 1.57 1 80
-spawn  0  DB3S  seach  right  0.5  for 1  move 0.8 0.5  after 2  for 1  move 0.5 0.8  after 2  for 1  move 0.2 0.5  after 2  for 1  move 0.5 0.2  after 2  for 1  move 0.8 0.5  after 2  lin left 80
+#spawn  0  DB3S  Seach  right  0.5  for 1  move 0.5 0.5  after 2  for 10  sin left 0 1 80  sin top 1.57 1 80
+spawn  0  DB3S  Seach  right  0.5  for 1  move 0.8 0.5  after 2  for 1  move 0.5 0.8  after 2  for 1  move 0.2 0.5  after 2  for 1  move 0.5 0.2  after 2  for 1  move 0.8 0.5  after 2  lin left 80
 
 #spawn  2  B0 B0 B0 B0 B0  eeach  right  0.2  lin left 50
 #spawn  2  B0  eeach  right  0.4  for 2  lin left 50  after 3  for 2  sin top 0 2 20  after 3  lin left 50

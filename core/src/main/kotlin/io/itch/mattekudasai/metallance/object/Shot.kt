@@ -41,10 +41,7 @@ class Shot(
             setBounds(0f, 0f, textureWidth, textureHeight)
         }
 
-        setPosition(
-            (internalPosition.x - width / 2f).toInt().toFloat(),
-            (internalPosition.y - height / 2f).toInt().toFloat()
-        )
+        setPosition(internalPosition.x, internalPosition.y)
         if (isRotating) {
             rotation = ((direction.angleDeg() + 45f / 2f) / 45).toInt() * 45f
         }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.sound.playSingleLow
+import kotlin.math.max
 
 class Enemy(
     texture: Texture,
@@ -54,10 +55,7 @@ class Enemy(
             internalTimer += delta
             previousPosition.set(internalPosition)
             updatePositionDt(internalTimer)
-            setPosition(
-                internalPosition.x - width / 2f,
-                internalPosition.y - height / 2f
-            )
+            setPosition(internalPosition.x, internalPosition.y)
             shootingRepeater?.update(delta)
         } else {
             internalTimer -= delta
@@ -67,12 +65,12 @@ class Enemy(
     val shouldBeRemoved: Boolean
         get() = !isAlive && internalTimer <= 0
 
-    fun hit(): Char? {
+    fun hit(damage: Int = 1): Char? {
         if (lastHitSound > -1) {
             hitSound.stop(lastHitSound)
             lastHitSound = -1
         }
-        hitPoints -= 1
+        hitPoints = max(0, hitPoints - damage)
         if (isAlive) {
             timeToMortal = invincibilityPeriod
             lastHitSound = hitSound.playSingleLow(lastHitSound, volume = 0.2f)

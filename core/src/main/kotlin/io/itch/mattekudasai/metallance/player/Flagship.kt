@@ -10,13 +10,13 @@ import io.itch.mattekudasai.metallance.`object`.Shot
 import io.itch.mattekudasai.metallance.player.Controls.isBackward
 import io.itch.mattekudasai.metallance.player.Controls.isDown
 import io.itch.mattekudasai.metallance.player.Controls.isForward
+import io.itch.mattekudasai.metallance.player.Controls.isLance
 import io.itch.mattekudasai.metallance.player.Controls.isShoot
 import io.itch.mattekudasai.metallance.player.Controls.isSlow
 import io.itch.mattekudasai.metallance.player.Controls.isUp
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.files.overridable
 import io.itch.mattekudasai.metallance.util.sound.playSingleLow
-import java.lang.Math.pow
 import ktx.app.KtxInputAdapter
 import kotlin.math.max
 import kotlin.math.min
@@ -35,10 +35,13 @@ class Flagship(
     private val initialShipType: Int,
     private val shot: (shipType: Int) -> Unit,
     private val tempoProvider: () -> Float,
+    private val spawnLanceBomb: () -> Unit,
 ) : SimpleSprite("texture/ship/normal.png"), KtxInputAdapter {
 
     private val state = State(40f, worldHeight / 2f)
     val internalPosition: Vector2 get() = state.position
+    val startLancingPosition: Vector2 get() = state.startLancingPosition
+    val endLancingPosition: Vector2 get() = state.endLancingPosition
     val rearPosition = Vector2()
     val frontPosition = Vector2()
     private val shipTextures = listOf(
@@ -55,10 +58,7 @@ class Flagship(
             val textureWidth = texture.width.toFloat()
             val textureHeight = texture.height.toFloat()
             setBounds(0f, 0f, textureWidth, textureHeight)
-            setPosition(
-                state.position.x - textureWidth/2f,
-                state.position.y - textureHeight/2f
-            )
+            setPosition(state.position.x, state.position.y)
             field = constrainedValue
         }
 
@@ -97,6 +97,7 @@ class Flagship(
                 keycode.isUp -> flyingUp = true
                 keycode.isDown -> flyingDown = true
                 keycode.isShoot -> shooting = true
+                keycode.isLance -> wantToLance = true
                 keycode.isSlow -> slow = true
                 Gdx.app.logLevel == Application.LOG_DEBUG && keycode == Input.Keys.T -> transform()
             }
@@ -112,6 +113,7 @@ class Flagship(
                 keycode.isUp -> flyingUp = false
                 keycode.isDown -> flyingDown = false
                 keycode.isShoot -> shooting = false
+                keycode.isLance -> wantToLance = false
                 keycode.isSlow -> slow = false
             }
         }
@@ -121,36 +123,61 @@ class Flagship(
 
     private val movingTo = Vector2()
     private var timeToStartOver = 0f
+    var isLancing: Boolean = false
+        private set
+    private var wasLancing: Boolean = false
+    var visibleTrailFactor: Float = 0f
 
     fun update(delta: Float) {
         timeToStartOver -= delta
+        if (!isLancing && state.wantToLance && charge > 0) {
+            isLancing = true
+            charge--
+        }
+        if (isLancing && !state.wantToLance) {
+            isLancing = false
+        }
+        if (!isLancing && visibleTrailFactor > 0f) {
+            visibleTrailFactor = max(0f, visibleTrailFactor - delta)
+        }
         val halfWidth = width / 2f
         val halfHeight = height / 2f
         if (!isAlive) {
             movingTo.set(-Shot.SPEED_SLOW*delta, 0f)
             state.position.add(movingTo)
-            setPosition(
-                (state.position.x - halfWidth).toInt().toFloat(),
-                (state.position.y - halfHeight).toInt().toFloat()
-            )
+            setPosition(state.position.x, state.position.y)
             return
         }
-        movingTo.set(
-            delta * horizontalSpeedMap[state.flyingForward]!![state.flyingBackward]!!,
-            delta * verticalSpeedMap[state.flyingUp]!![state.flyingDown]!!
-        )
-        if (movingTo.x != 0f && movingTo.y != 0f) {
-            movingTo.scl(DIAGONAL_SPEED_FACTOR)
-        }
-        if (state.slow) {
-            movingTo.scl(SLOWING_FACTOR)
-            if (slowingTransition < 1f) {
-                slowingTransition = min(1f, slowingTransition + delta / SLOWING_TRANSITION_TIME)
+        if (isLancing) {
+            if (!wasLancing) {
+                visibleTrailFactor = 1f
+                state.startLancingPosition.set(internalPosition)
+                wasLancing = true
             }
-        } else if (slowingTransition > 0f) {
-            slowingTransition = max(0f, slowingTransition - delta / SLOWING_TRANSITION_TIME)
-        }
+            movingTo.set(delta * LANCING_SPEED, 0f)
+        } else {
+            if (wasLancing) {
+                spawnLanceBomb()
+                state.endLancingPosition.set(internalPosition)
+                wasLancing = false
+            }
 
+            movingTo.set(
+                delta * horizontalSpeedMap[state.flyingForward]!![state.flyingBackward]!!,
+                delta * verticalSpeedMap[state.flyingUp]!![state.flyingDown]!!
+            )
+            if (movingTo.x != 0f && movingTo.y != 0f) {
+                movingTo.scl(DIAGONAL_SPEED_FACTOR)
+            }
+            if (state.slow) {
+                movingTo.scl(SLOWING_FACTOR)
+                if (slowingTransition < 1f) {
+                    slowingTransition = min(1f, slowingTransition + delta / SLOWING_TRANSITION_TIME)
+                }
+            } else if (slowingTransition > 0f) {
+                slowingTransition = max(0f, slowingTransition - delta / SLOWING_TRANSITION_TIME)
+            }
+        }
 
         with(state.position) {
             add(movingTo)
@@ -158,6 +185,10 @@ class Flagship(
                 x = halfWidth
             } else if (x > worldWidth - halfWidth) {
                 x = worldWidth - halfWidth
+                if (isLancing) {
+                    state.wantToLance = false
+                    state.wantToLance = false // just in case of double-button-hold
+                }
             }
             if (y < hudHeight + halfHeight) {
                 y = hudHeight + halfHeight
@@ -165,10 +196,10 @@ class Flagship(
                 y = worldHeight - halfHeight
             }
         }
-        setPosition(
-            (state.position.x - halfWidth).toInt().toFloat(),
-            (state.position.y - halfHeight).toInt().toFloat()
-        )
+        if (wasLancing) {
+            state.endLancingPosition.set(internalPosition)
+        }
+        setPosition(state.position.x, state.position.y)
 
         if (state.timeFromLastShot > shootingCooldown && state.shooting) {
             state.timeFromLastShot = 0f
@@ -211,11 +242,14 @@ class Flagship(
         isAlive = false
         texture = explosionTexture
         setBounds(0f, 0f, explosionTexture.width.toFloat(), explosionTexture.height.toFloat())
-        setPosition(state.position.x - explosionTexture.width / 2, state.position.y - explosionTexture.height / 2)
+        setPosition(state.position.x, state.position.y)
         timeToStartOver = 1f
     }
 
-    fun startOver(): Boolean {
+    fun hit(): Boolean {
+        if (state.wantToLance) {
+            return false
+        }
         if (!easyMode) {
             if (--lives < 0) {
                 explode()
@@ -235,6 +269,7 @@ class Flagship(
 
     companion object {
         const val SPEED_LIMIT = 200f
+        const val LANCING_SPEED = 600f
         const val HORIZONTAL_SPEED = SPEED_LIMIT
         const val VERTICAL_SPEED = SPEED_LIMIT * 0.66f
         const val DIAGONAL_SPEED_FACTOR = SPEED_LIMIT / (HORIZONTAL_SPEED + VERTICAL_SPEED)

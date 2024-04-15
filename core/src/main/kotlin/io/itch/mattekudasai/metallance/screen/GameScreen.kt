@@ -53,6 +53,7 @@ class GameScreen(
 
     private val hudHeight = 8f
     private val tempReusableColor: Color = Color.WHITE.cpy()
+    private val tempReusableColor2: Color = Color.WHITE.cpy()
 
     private val flagship: Flagship by remember {
         Flagship(
@@ -66,7 +67,19 @@ class GameScreen(
             configuration.charge,
             configuration.shipType,
             ::shoot,
-            tempoProvider = { level.musicTempo }
+            tempoProvider = { level.musicTempo },
+            spawnLanceBomb = {
+                bombs += Bomb(
+                    flagship.internalPosition.cpy(),
+                    400f,
+                    60f,
+                    false,
+                    0f,
+                    1f,
+                    Color.WHITE,
+                    Color.BLACK.cpy().apply { a = 0.6f }
+                )
+            }
         )
     }
     private val batch: SpriteBatch by remember { SpriteBatch() }
@@ -79,6 +92,7 @@ class GameScreen(
     private val powerUps = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val energyPods = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val shipUpgrades = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
+    private val shieldUpgrades = mutableDisposableListOf<Shot>(onDisposed = ::forget).autoDisposing()
     private val bombs = mutableDisposableListOf<Bomb>(onDisposed = ::forget).autoDisposing()
 
 
@@ -94,6 +108,7 @@ class GameScreen(
     private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
     private val energyPodTexture: Texture by remember { Texture("texture/upgrade/energy.png".overridable) }
     private val shipUpgradeTexture: Texture by remember { Texture("texture/upgrade/ship.png") }
+    private val shieldUpgradeTexture: Texture by remember { Texture("texture/upgrade/shield.png") }
 
     private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
     private var defeatToWin: Int = Integer.MAX_VALUE
@@ -281,6 +296,15 @@ class GameScreen(
         )
     }
 
+    private fun spawnShieldUpgrade(location: Vector2) {
+        shieldUpgrades += Shot(
+            location.cpy(),
+            initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
+            texture = shieldUpgradeTexture,
+            isRotating = false
+        )
+    }
+
     private val SimpleSprite.isOnScreen: Boolean
         get() {
             val halfWidth = width / 2f
@@ -390,6 +414,7 @@ class GameScreen(
             powerUps.forEach { it.draw(batch) }
             energyPods.forEach { it.draw(batch) }
             shipUpgrades.forEach { it.draw(batch) }
+            shieldUpgrades.forEach { it.draw(batch) }
             enemyShots.forEach { it.draw(batch) }
             enemies.forEach {
                 if (it.isAlive && (!it.isInvincible || !evenFrame)) {
@@ -398,6 +423,23 @@ class GameScreen(
             }
         }
         bombs.forEach { it.draw(camera) }
+        if (flagship.visibleTrailFactor > 0f) {
+            withTransparency {
+                shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) {
+                    val fullWidth = flagship.endLancingPosition.x - flagship.startLancingPosition.x
+                    val visibleWidth = fullWidth * flagship.visibleTrailFactor
+                    val startX = flagship.endLancingPosition.x - visibleWidth
+                    it.line(
+                        startX,
+                        flagship.startLancingPosition.y,
+                        flagship.endLancingPosition.x,
+                        flagship.startLancingPosition.y,
+                        tempReusableColor.set(Color.WHITE).apply { a  = 0f },
+                        tempReusableColor2.set(Color.WHITE).apply { a = flagship.visibleTrailFactor}
+                    )
+                }
+            }
+        }
         batch.use(camera) { batch ->
             enemies.forEach {
                 if (!it.isAlive) {
@@ -485,14 +527,16 @@ class GameScreen(
                 // flagship collision check
                 val flagshipHit = !flagship.isInvincible && flagship.collides(enemy, 3f, 1.5f)
                 if (flagshipHit) {
-                    enemy.explodeAndSpawnReward()
+                    enemy.explodeAndSpawnReward(damage = if (flagship.isLancing) 3 else 1)
                     damageFlagship()
                 }
             }
             if (enemy.isAlive && !enemy.isInvincible) { // still alive
                 bombs.forEach { bomb ->
-                    if (bomb.hits(enemy.internalPosition, enemy.width / 2f, enemy)) {
-                        enemy.explodeAndSpawnReward()
+                    if (!bomb.isEnemy) {
+                        if (bomb.hits(enemy.internalPosition, enemy.width / 2f, enemy)) {
+                            enemy.explodeAndSpawnReward(2)
+                        }
                     }
                 }
             }
@@ -545,6 +589,7 @@ class GameScreen(
         powerUps.updatePickups(delta) { flagship.powerUp() }
         energyPods.updatePickups(delta) { flagship.chargeUp() }
         shipUpgrades.updatePickups(delta) { flagship.transform() }
+        shieldUpgrades.updatePickups(delta) { createShield() }
         bombs.removeAll { !it.update(delta) }
 
         if (!flagship.isAlive) {
@@ -561,8 +606,21 @@ class GameScreen(
         }
     }
 
+    private fun createShield() {
+        bombs += Bomb(
+            flagship.internalPosition,
+            200f,
+            20f,
+            false,
+            10f,
+            2f,
+            Color.WHITE,
+            Color.BLACK.cpy().apply { a = 0.6f }
+        )
+    }
+
     private fun damageFlagship() {
-        if (flagship.startOver()) {
+        if (flagship.hit()) {
             bombs += Bomb(
                 flagship.internalPosition.cpy(),
                 speed = 400f,
@@ -593,12 +651,13 @@ class GameScreen(
         }
     }
 
-    private fun Enemy.explodeAndSpawnReward() {
-        hit()?.let {
+    private fun Enemy.explodeAndSpawnReward(damage: Int = 1) {
+        hit(damage)?.let {
             when (it) {
                 'p' -> spawnPowerUp(internalPosition)
                 'e' -> spawnEnergyPod(internalPosition)
-                's' -> spawnShipUpgrade(internalPosition)
+                'S' -> spawnShipUpgrade(internalPosition)
+                's' -> spawnShieldUpgrade(internalPosition)
                 'w' -> if (flagship.isAlive) {
                     advance(configuration)
                 }

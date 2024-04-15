@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.`object`.Shot
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sign
@@ -55,7 +56,7 @@ class ShootingPattern(
                     result =
                         when (c) {
                             in '2'..'9' -> result.replace(0) { c - '0' }
-                            'F' -> result.replace(3) { min(10, this + 1) } // faster
+                            'F' -> result.replace(2) { max(0, this - 1) } // faster
                             'S' -> result.replace(4) { 2 } // spread
                             'W' -> result.replace(4) { 5 } // widespread
                             'R' -> result.replace(4) { 9 } // round

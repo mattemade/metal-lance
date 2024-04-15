@@ -14,10 +14,9 @@ robot that can transform, hence such a mix of genres.
 
 Tools used:
 
-* [libGDX](https://github.com/libgdx/libgdx) with [TeaVM](https://github.com/konsoletyper/teavm) for code (all the code
-  is GNU)
+* [libGDX](https://github.com/libgdx/libgdx) with [TeaVM](https://github.com/konsoletyper/teavm) for code
 * [GIMP](https://github.com/GNOME/gimp) for images
-* [LMMS](https://github.com/LMMS/lmms) for sound effects
+* [LMMS](https://github.com/LMMS/lmms) for sound effects (not really since I didn't make any sound yet, remove?)
 
 Licenses:
 
@@ -31,12 +30,12 @@ Licenses:
 |------------|-------|-------|-------|-----|-----|
 | Intro      | 100   | 0     | 0     | 50  | 0   |
 | Title      | 100   | 10    | 100   | 0   | 10  |
-| Tutorial   | 100   | 95    | 0     | 100 | 100 |
-| Stage 1    | 100   | 1     | 100   | 0   | 25  |
+| Tutorial   | 100   | 95    | 0     | 80  | 100 |
+| Stage 1    | 100   | 1     | 100   | 80  | 25  |
 | Boss 1     | 100   | 1     | 0     | 0   | 25  |
-| Stage 2    | 100   | 0     | 100   | 0   | 0   |
+| Stage 2    | 100   | 0     | 100   | 80  | 0   |
 | Boss 2     | 100   | 0     | 100   | 0   | 0   |
-| Stage 3    | 100   | 0     | 100   | 0   | 0   |
+| Stage 3    | 100   | 0     | 100   | 80  | 0   |
 | Final boss | 100   | 0     | 0     | 0   | 0   |
 | Game over  | 100   | 0     | 0     | 0   | 0   |
 | Outro      | 100   | 0     | 0     | 0   | 0   |
@@ -56,17 +55,16 @@ Licenses:
 | 9   | 12/04/2024 | FRI  | 4-6 | Finish the scheduling engine                                                               | 5    | Finished (not really) scheduling engine, refined power-ups, enemies and bombs                                                                                                                                                                                                                                          |
 | 10  | 13/04/2024 | SAT  | 4-6 | Layout the first stage                                                                     | 5    | Fixed a nasty shader bug, advancing the level engine, simplified describing shooting patterns, layout for a part of the 1st stage, finished the tutorial                                                                                                                                                               |
 | 11  | 14/04/2024 | SUN  | 4-6 | Layout enemy schedule on all three stages, simplified bosses for 1-st and 2-nd stages      | 4    | Tempo sync in level engine and shooting patterns, made half of level 1, but it should be easy from now on; prepared the rhythm for level 2 and 3; basic HUD; easy mode; fade effects for game screen                                                                                                                   |
-| 12  | 15/04/2024 | MON  | 1-2 | Finish level 1 layout, start level 2                                                       | 1.5  | Tempo sync in player shots, mapped in-game sounds, removed animated assets for consistency                                                                                                                                                                                                                             |
-| 13  | 16/04/2024 | TUE  | 1-2 | Finish level 2 and level 3 layouts                                                         |      |                                                                                                                                                                                                                                                                                                                        |
+| 12  | 15/04/2024 | MON  | 3-4 | Finish player movements, complete the tutorial                                             | 4    | Tempo sync in player shots, mapped in-game sounds, removed animated assets for consistency, added the lance strike (finally!), shield upgrade, completed the tutorial (this time for sure)                                                                                                                             |
+| 13  | 16/04/2024 | TUE  | 1-2 | Finish all levels layout                                                                   |      |                                                                                                                                                                                                                                                                                                                        |
 | 14  | 17/04/2024 | WED  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
-| 15  | 18/04/2024 | THU  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
-| 16  | 19/04/2024 | FRI  | 1-2 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
-| 17  | 20/04/2024 | SAT  | 1-2 | Final touches, submission at 16:00                                                         |      |                                                                                                                                                                                                                                                                                                                        |
+| 15  | 18/04/2024 | THU  | 3-4 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
+| 16  | 19/04/2024 | FRI  | 6-8 | Final boss                                                                                 |      |                                                                                                                                                                                                                                                                                                                        |
+| 17  | 20/04/2024 | SAT  | 3-4 | Final touches, submission at 16:00                                                         |      |                                                                                                                                                                                                                                                                                                                        |
 
 ## Behind the schedule
 
-* lance strike
-* levels
+* LEVELS
 * transitions (at least fade out / fade in)
     * between intro pictures
     * between menu screens

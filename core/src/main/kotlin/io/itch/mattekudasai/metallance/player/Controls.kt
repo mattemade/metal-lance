@@ -20,6 +20,7 @@ object Controls {
     val Int.isUp: Boolean get() = upKeycodes.contains(this)
     val Int.isDown: Boolean get() = downKeycodes.contains(this)
     val Int.isShoot: Boolean get() = shootKeycodes.contains(this)
+    val Int.isLance: Boolean get() = lanceKeycodes.contains(this)
     val Int.isSlow: Boolean get() = slowKeycodes.contains(this)
 
     val Int.isAnyKey: Boolean get() = allKeys.contains(this)
