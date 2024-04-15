@@ -91,33 +91,10 @@ class GameScreen(
     private val enemyShotTextures = listOf("texture/bullet/wave.png").map {
         Texture(it.overridable).autoDisposing()
     }
+    private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
+    private val energyPodTexture: Texture by remember { Texture("texture/upgrade/energy.png".overridable) }
+    private val shipUpgradeTexture: Texture by remember { Texture("texture/upgrade/ship.png") }
 
-    //private val powerUpTexture: Texture by remember { Texture("texture/upgrade/power.png".overridable) }
-    private val powerUpTextures = (0..2).map { index ->
-        (0..9).map { frame ->
-            Texture("texture/upgrade/power/p${index}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
-        }
-    }
-    private var currentPowerTexture = 0
-
-    //private val energyPodTexture: Texture by remember { Texture("texture/upgrade/energy.png".overridable) }
-    private val energyPodTextures = (5..5).map { index ->
-        ((if (index == 4) 1 else 0)..(if (index == 1 || index == 4) 15 else 9)).map { frame ->
-            Texture("texture/upgrade/energy/e${index}_$frame.png".overridable).autoDisposing() to if (frame == 9) 0.292f else 0.042f
-        }
-    }
-    private var currentEnergyTexture = 0
-
-    //private val shipUpgradeTexture: Texture by remember { Texture("texture/upgrade/ship.png") }
-    private val shipUpgradeTextures = (0..1).map { index ->
-        if (index == 1) {
-            listOf(Texture("texture/upgrade/ship.png".overridable).autoDisposing() to 10f)
-        } else
-            (0..20).map { frame ->
-                Texture("texture/upgrade/ship/s${index}_$frame.png".overridable).autoDisposing() to if (frame == 20) 0.292f else 0.042f
-            }
-    }
-    private var currentShipUpgradeTexture = 0
     private var environmentRenderer: EnvironmentRenderer = NoopEnvironmentRenderer
     private var defeatToWin: Int = Integer.MAX_VALUE
     private var gameOverTimer: Float = 0f
@@ -278,31 +255,28 @@ class GameScreen(
     }
 
     private fun spawnPowerUp(location: Vector2) {
-        currentPowerTexture = (currentPowerTexture + 1) % powerUpTextures.size
         powerUps += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            textures = powerUpTextures[currentPowerTexture],
+            texture = powerUpTexture,
             isRotating = false
         )
     }
 
     private fun spawnEnergyPod(location: Vector2) {
-        currentEnergyTexture = (currentEnergyTexture + 1) % energyPodTextures.size
         energyPods += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            textures = energyPodTextures[currentEnergyTexture],
+            texture = energyPodTexture,
             isRotating = false
         )
     }
 
     private fun spawnShipUpgrade(location: Vector2) {
-        currentShipUpgradeTexture = (currentShipUpgradeTexture + 1) % shipUpgradeTextures.size
         shipUpgrades += Shot(
             location.cpy(),
             initialDirection = Vector2(-Shot.SPEED_POWER_UP, 0f),
-            textures = shipUpgradeTextures[currentShipUpgradeTexture],
+            texture = shipUpgradeTexture,
             isRotating = false
         )
     }
