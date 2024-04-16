@@ -57,6 +57,7 @@ class ShootingPattern(
                         when (c) {
                             in '2'..'9' -> result.replace(0) { c - '0' }
                             'F' -> result.replace(2) { max(0, this - 1) } // faster
+                            'D' -> result.replace(1) { 0 } // don't wait before shooting
                             'S' -> result.replace(4) { 2 } // spread
                             'W' -> result.replace(4) { 5 } // widespread
                             'R' -> result.replace(4) { 9 } // round

@@ -11,7 +11,7 @@ class Enemy(
     texture: Texture,
     private val explosionTexture: Texture,
     val initialPosition: Vector2,
-    private val updatePositionDt: Enemy.(t: Float) -> Unit = { },
+    private val updatePositionDt: Enemy.(t: Float) -> Any = { },
     private val shot: (Enemy) -> Unit,
     private val initialHitPoints: Int = 1,
     private val invincibilityPeriod: Float = 0f,

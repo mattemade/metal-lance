@@ -1,5 +1,6 @@
 package io.itch.mattekudasai.metallance.stage
 
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Vector2
@@ -8,6 +9,7 @@ import io.itch.mattekudasai.metallance.enemy.DelayedRepeater
 import io.itch.mattekudasai.metallance.enemy.Enemy
 import io.itch.mattekudasai.metallance.enemy.ShootingPattern.Companion.toPatternInt
 import java.util.*
+import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
@@ -164,6 +166,12 @@ class Level(
                     trajectory.getFloat(3),
                     trajectory.getFloat(4)
                 ).activeIn(from, to)
+                "cos" -> sequence += cosTrajectory(
+                    direction,
+                    trajectory.getFloat(2),
+                    trajectory.getFloat(3),
+                    trajectory.getFloat(4)
+                ).activeIn(from, to)
 
                 "move" -> sequence += directedTrajectory(
                     Vector2(trajectory.getFloat(1) * getWorldWidth(), trajectory.getFloat(2) * getWorldHeight()),
@@ -238,7 +246,8 @@ class Level(
             'B' -> 1 to 0f
             'C' -> 2 to 1f
             'D' -> 3 to 1f
-            'E' -> 10 to 0f
+            'E' -> 30 to 0f // level 1 boss
+            'F' -> 50 to 0f // level 2 boss
             else -> 1 to 0f
         }
 
@@ -250,24 +259,26 @@ class Level(
         else -> Align.right
     }
 
-    private fun (Enemy.(time: Float) -> Unit).activeIn(from: Float, to: Float): (Enemy.(time: Float) -> Unit) =
+    private inline fun (Enemy.(time: Float) -> Any).activeIn(from: Float, to: Float): (Enemy.(time: Float) -> ActiveInMarker) =
         { time ->
             this@activeIn(
                 if (time >= from) {
                     if (time < to) time - from else to - from
                 } else 0f
             )
+            ActiveInMarker
         }
 
-    private operator fun (Enemy.(time: Float) -> Unit).plus(another: Enemy.(time: Float) -> Unit): Enemy.(time: Float) -> Unit =
+    private inline operator fun (Enemy.(time: Float) -> Any).plus(crossinline another: Enemy.(time: Float) -> Any): Enemy.(time: Float) -> PlusMarker =
         { time ->
             this@plus(time)
             another(time)
+            PlusMarker
         }
 
-    private fun startSequence(): Enemy.(time: Float) -> Unit = { }
+    private fun startSequence(): Enemy.(time: Float) -> Any = { }
 
-    private fun (Enemy.(time: Float) -> Unit).wrapSequence(from: Float, to: Float): (Enemy.(time: Float) -> Unit) =
+    private inline fun (Enemy.(time: Float) -> Any).wrapSequence(from: Float, to: Float): (Enemy.(time: Float) -> WrapSeqMarker) =
         { time ->
             var remainingTime = time
             while (remainingTime > 0f) {
@@ -277,13 +288,14 @@ class Level(
                 }
                 remainingTime -= to
             }
+            WrapSeqMarker
         }
 
-    private fun resetPosition(): Enemy.(time: Float) -> Unit = {
+    private fun resetPosition(): Enemy.(time: Float) -> Any = {
         internalPosition.set(initialPosition)
     }
 
-    private fun linearTrajectory(direction: Int, speed: Float): Enemy.(time: Float) -> Unit = { time ->
+    private fun linearTrajectory(direction: Int, speed: Float): Enemy.(time: Float) -> LinMarker = { time ->
         internalPosition.add(
             when {
                 Align.isRight(direction) -> time * speed
@@ -296,15 +308,26 @@ class Level(
                 else -> 0f
             }
         )
+        LinMarker
     }
 
-    private fun directedTrajectory(position: Vector2, toMinusFromTime: Float): Enemy.(time: Float) -> Unit = { time ->
+    private fun directedTrajectory(position: Vector2, toMinusFromTime: Float): Enemy.(time: Float) -> DirectedMarker = { time ->
         if (time >= toMinusFromTime) {
             internalPosition.set(position)
         } else {
             internalPosition.add(position.cpy().sub(internalPosition).scl(time / toMinusFromTime))
         }
+        DirectedMarker
     }
+
+    object DirectedMarker
+    object SinMarker
+    object CosMarker
+    object PlusMarker
+    object LinMarker
+    object WrapSeqMarker
+    object ActiveInMarker
+
 
     private fun changeShootingPattern(
         subscription: ShootingPatternSubscription,
@@ -323,12 +346,12 @@ class Level(
     }
 
 
-    private fun sinTrajectory(
+    private inline fun sinTrajectory(
         direction: Int,
         start: Float,
         speed: Float,
         amplitude: Float
-    ): Enemy.(time: Float) -> Unit = { time ->
+    ): Enemy.(time: Float) -> SinMarker = { time ->
         internalPosition.add(
             when {
                 Align.isRight(direction) -> sin(start + time * speed) * amplitude
@@ -341,6 +364,28 @@ class Level(
                 else -> 0f
             }
         )
+        SinMarker
+    }
+
+    private inline fun cosTrajectory(
+        direction: Int,
+        start: Float,
+        speed: Float,
+        amplitude: Float
+    ): Enemy.(time: Float) -> CosMarker = { time ->
+        internalPosition.add(
+            when {
+                Align.isRight(direction) -> cos(start + time * speed) * amplitude
+                Align.isLeft(direction) -> -cos(start + time * speed) * amplitude
+                else -> 0f
+            },
+            when {
+                Align.isTop(direction) -> cos(start + time * speed) * amplitude
+                Align.isBottom(direction) -> -cos(start + time * speed) * amplitude
+                else -> 0f
+            }
+        )
+        CosMarker
     }
 
     private fun List<String>.getString(index: Int, defaultValue: String = ""): String =
@@ -398,7 +443,7 @@ class Level(
         val shootingPatternSubscription: ShootingPatternSubscription,
         val spawnSide: Int = Align.right, // e.g. "where does it come from?"
         val spawnSideFactor: Float = 0.5f, // e.g. "how far from 0 to SIDE_LENGTH does it come from?"
-        val updatePositionDt: Enemy.(time: Float) -> Unit,
+        val updatePositionDt: Enemy.(time: Float) -> Any,
         val initialHitPoints: Int,
         val invincibilityPeriod: Float,
         val onRemoved: () -> Unit,
