@@ -50,7 +50,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         1f to {}, // wait
         0f to {
             if (textIndex < textArray.size) {
-                characterTime = if (textIndex == textArray.size - 1) 0.3f else 0.125f
+                characterTime = if (textIndex == 0) 0.3f else if (textIndex == textArray.size - 1) 0.24f else 0.125f
                 fadeInFor = FADE_TIME
                 val text = textArray[textIndex++]
                 val textDelay = text.sumOf { it.length } * characterTime + 2f
@@ -59,10 +59,11 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
                 currentWaitTime += textDelay
             }
         },
+        1.5f to {
+            fadeInFor = 0f
+            fadeOutFor = FADE_TIME * 2f
+        }, // wait
         1f to {
-            fadeOutFor = FADE_TIME
-          }, // wait
-        0f to {
             music.stop()
             finish()
         }
@@ -70,7 +71,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private var textIndex = 0
     private var actionIndex = 0
     private var currentWaitTime = 0f
-    private val transparentColor = Color.WHITE.cpy()
+    private val transparentColor = Color.CLEAR.cpy()
 
     override fun render(delta: Float) {
         clearScreen(red = 0f, green = 0f, blue = 0f)
@@ -82,20 +83,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             music.pause()
         } else if (actionIndex > 0 && textIndex >= 1 && !music.isPlaying) {
             music.play()
-            music.volume = musicVolume
-            music.isLooping = false
-        }
-
-        if (fadeInFor > 0f) {
-            fadeInFor = max(0f, fadeInFor - delta)
-            transparentColor.a = min(1f, 1f - fadeInFor / FADE_TIME)
-        } else if (fadeOutFor > 0f) {
-            fadeOutFor = max(0f, fadeOutFor - delta)
-            transparentColor.r = 1f
-            transparentColor.g = 1f
-            transparentColor.b = 1f
-            transparentColor.a = max(0f, fadeOutFor / FADE_TIME)
-            //music.volume = musicVolume * transparentColor.a
+            music.volume = 0.15f
         }
 
         currentWaitTime -= delta
@@ -103,6 +91,20 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             val action = sequence[actionIndex++]
             action.second.invoke()
             currentWaitTime += action.first
+        }
+
+        if (fadeInFor > 0f) {
+            fadeInFor = max(0f, fadeInFor - delta)
+            val factor = max(0f, min(1f, 1f - fadeInFor / FADE_TIME))
+            transparentColor.r = factor
+            transparentColor.g = factor
+            transparentColor.b = factor
+            transparentColor.a = factor
+        }
+
+        if (fadeOutFor > 0f) {
+            fadeOutFor = max(0f, fadeOutFor - delta)
+            transparentColor.a = max(0f, min(1f, fadeOutFor / FADE_TIME))
         }
 
         if (actionIndex == 0) {
@@ -113,28 +115,17 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         withTransparency {
             batch.use(camera) {
                 if (textIndex - 1 >= 0) {
-                    if (actionIndex == 1) {
-                        if (transparentColor.a < 1f && textIndex - 2 >= 0) {
-                            it.color = Color.WHITE
-                            it.draw(textures[textIndex - 2], 0f.intFloat, 32f.intFloat)
-                            transparentColor.r = transparentColor.a
-                            transparentColor.g = transparentColor.a
-                            transparentColor.b = transparentColor.a
-                        } else {
-                            transparentColor.r = 1f
-                            transparentColor.g = 1f
-                            transparentColor.b = 1f
-                        }
+                    if (actionIndex == 1 && textIndex - 2 >= 0) { // only draw previous image if we are not fading out
+                        it.color = Color.WHITE
+                        it.draw(textures[textIndex - 2], 0f.intFloat, 32f.intFloat)
                     }
                     it.color = transparentColor
                     it.draw(textures[textIndex - 1], 0f.intFloat, 32f.intFloat)
-
                 }
                 it.color = if (actionIndex > 1) transparentColor else Color.WHITE
                 delayedTextDrawer.updateAndDraw(delta, batch)
             }
         }
-        super.render(delta)
     }
 
     override fun resize(width: Int, height: Int) {
@@ -154,8 +145,7 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     }
 
     companion object {
-        private const val musicVolume = 0.15f
-        private var characterTime = 0.8f
+        private var characterTime = 1f
 
         private val lines = """
         20XX
