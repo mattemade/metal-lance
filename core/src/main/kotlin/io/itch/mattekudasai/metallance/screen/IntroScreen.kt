@@ -40,16 +40,17 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             fontHorizontalPadding = 1,
         )
     }
-    private val delayedTextDrawer = DelayedTextDrawer(textDrawer, characterTime)
+    private val delayedTextDrawer = DelayedTextDrawer(textDrawer, ::characterTime)
     private val textures = images.map { Texture(it.overridable).autoDisposing() }
     private val music: Music by remember { Gdx.audio.newMusic("music/intro.ogg".overridable) }
     private var fadeInFor: Float = 0f
     private var fadeOutFor: Float = 0f
 
     private val sequence = listOf(
-        0.5f to {}, // wait
+        1f to {}, // wait
         0f to {
             if (textIndex < textArray.size) {
+                characterTime = if (textIndex == textArray.size - 1) 0.3f else 0.125f
                 fadeInFor = FADE_TIME
                 val text = textArray[textIndex++]
                 val textDelay = text.sumOf { it.length } * characterTime + 2f
@@ -79,23 +80,22 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
 
         if (delta == 0f) {
             music.pause()
-        } else if (!music.isPlaying) {
+        } else if (actionIndex > 0 && textIndex >= 1 && !music.isPlaying) {
             music.play()
             music.volume = musicVolume
-            music.isLooping = true
+            music.isLooping = false
         }
 
         if (fadeInFor > 0f) {
             fadeInFor = max(0f, fadeInFor - delta)
             transparentColor.a = min(1f, 1f - fadeInFor / FADE_TIME)
-        }
-        if (fadeOutFor > 0f) {
+        } else if (fadeOutFor > 0f) {
             fadeOutFor = max(0f, fadeOutFor - delta)
             transparentColor.r = 1f
             transparentColor.g = 1f
             transparentColor.b = 1f
             transparentColor.a = max(0f, fadeOutFor / FADE_TIME)
-            music.volume = musicVolume * transparentColor.a
+            //music.volume = musicVolume * transparentColor.a
         }
 
         currentWaitTime -= delta
@@ -154,15 +154,31 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     }
 
     companion object {
-        private const val musicVolume = 1f
-        private const val characterTime = 0.04f
+        private const val musicVolume = 0.15f
+        private var characterTime = 0.8f
+
         private val lines = """
         20XX
 
         Earth is invaded by alien race
-        That conquered the universe""".trimIndent().uppercase()
+        That conquered the universe
+
+        For many years people were enslaved
+
+        But deep underground
+
+        They worked together to put
+        everything they had
+
+        Into creating the last hope of humanity
+
+        the ultimate weapon
+
+        METAL LANCE
+        """.trimIndent().uppercase()
 
         private val textArray = lines.split("\n\n").map { it.split("\n") }
+
         private val images = textArray.indices.map { "texture/intro/intro$it.png" }
         private const val FADE_TIME = 0.5f
     }

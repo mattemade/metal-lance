@@ -34,7 +34,8 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             fontHorizontalPadding = 1,
         )
     }
-    private val delayedTextDrawer = DelayedTextDrawer(textDrawer, characterTime)
+    private val delayedTextDrawer = DelayedTextDrawer(textDrawer, { characterTime })
+
     //private val textures = images.map { Texture(it.overridable).autoDisposing() }
     private val music: Music by remember { Gdx.audio.newMusic("music/intro.ogg".overridable) }
 
@@ -91,7 +92,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
 
         viewport.apply(true)
         batch.use(camera) {
-            if (textIndex-1 >= 0) {
+            if (textIndex - 1 >= 0) {
                 //it.draw(textures[textIndex-1], 0f, 32f)
             }
             delayedTextDrawer.updateAndDraw(delta, batch)

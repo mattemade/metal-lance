@@ -224,7 +224,7 @@ class GameScreen(
             fontHorizontalPadding = 1,
         )
     }
-    val delayedTextDrawer = DelayedTextDrawer(textDrawer, 0.04f)
+    val delayedTextDrawer = DelayedTextDrawer(textDrawer, { 0.04f })
     private var music: Music? = null
 
     private fun spawnShot(offsetX: Float = 0f, offsetY: Float = 0f, angleDeg: Float = 0f): Shot =
@@ -434,8 +434,8 @@ class GameScreen(
                         flagship.startLancingPosition.y,
                         flagship.endLancingPosition.x,
                         flagship.startLancingPosition.y,
-                        tempReusableColor.set(Color.WHITE).apply { a  = 0f },
-                        tempReusableColor2.set(Color.WHITE).apply { a = flagship.visibleTrailFactor}
+                        tempReusableColor.set(Color.WHITE).apply { a = 0f },
+                        tempReusableColor2.set(Color.WHITE).apply { a = flagship.visibleTrailFactor }
                     )
                 }
             }

@@ -3,7 +3,7 @@ package io.itch.mattekudasai.metallance.util.drawing
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Align
 
-class DelayedTextDrawer(private val textDrawer: MonoSpaceTextDrawer, private val timePerCharacter: Float) {
+class DelayedTextDrawer(private val textDrawer: MonoSpaceTextDrawer, private val timePerCharacter: () -> Float) {
 
     private var internalTimer = 0f
     private var text: List<String> = emptyList()
@@ -35,7 +35,7 @@ class DelayedTextDrawer(private val textDrawer: MonoSpaceTextDrawer, private val
         var isLimitChanged = false
         if (!isFinished) {
             val previousLimit = currentCharacterLimit
-            currentCharacterLimit = (internalTimer / timePerCharacter).toInt()
+            currentCharacterLimit = (internalTimer / timePerCharacter()).toInt()
             isLimitChanged = previousLimit != currentCharacterLimit
         }
 
