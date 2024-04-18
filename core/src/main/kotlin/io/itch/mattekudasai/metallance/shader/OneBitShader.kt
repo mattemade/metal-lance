@@ -1,5 +1,6 @@
 package io.itch.mattekudasai.metallance.shader
 
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.math.Vector2
@@ -25,6 +26,9 @@ object OneBitShader {
         time: Float? = null,
         tint: Color? = null,
     ) {
+        if (tint != null) {
+            Gdx.app.debug("tint.r", "${tint?.r}")
+        }
         use {
             renderColorMode?.let { setUniformi("renderColor", it) }
             stage?.let { setUniformi("stage", it) }

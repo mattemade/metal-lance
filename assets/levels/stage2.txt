@@ -6,17 +6,20 @@ wait  b1
 
 # part 1
 
+#goto  141
+goto  36
+
 # slow intro
 # b4 is already used for text
 #spawn  b6  BB BB BB  pall  right  0.7  sin top 0 1.7 10  lin left 100
 
-spawn  0  BZ  none  right  0.8  lin left 80
+spawn  0  BB9XRF  none  right  0.8  for b1  move 0.8 0.5  after b1  sin top 0 3 100
 wait  b4
-spawn  0  BZ  none  right  0.8  lin left 80
+spawn  0  BB3ZR  none  right  0.8  lin left 80
 wait  b4
-spawn  0  BZ  none  right  0.8  lin left 80
+spawn  0  BB  none  right  0.8  lin left 80
 wait  b4
-spawn  0  BZ  none  right  0.8  lin left 80
+spawn  0  BB  none  right  0.8  lin left 80
 wait  b4
 
 
@@ -28,45 +31,79 @@ text
 
 text  NOTHING HERE YET\COME BACK LATER  0.5  0.8
 wait  b8
-end
 
-#####
+
+# slow intro
+# b4 is already used for text
+spawn  b8  BBFD BBFD BBFD BBFD  pall  right  0.7  sin top 0 1.7 20  lin left 80
+wait  b4
+text
+wait  b4
+spawn  b8  BBFD BBFD BBFD BBFD  pall  right  0.3  sin bottom 0 1.7 20  lin left 80
 wait  b4
 wait  b4
+spawn  b8  BBFD BBFD BBFD BBFD  eall  bottom  0.9 0.5  lin top 80
+spawn  b8  BBFD BBFD BBFD BBFD  eall  top  0.3 0.6  lin bottom 80
 wait  b4
 wait  b4
-wait  b4
+spawn  0  D0  none  right  0.5  for b1  move 0.8 0.5  after b1  shoot B4XRF  after b1  shoot 0  after b1  lin right 200
 wait  b4
 
 # cheery
+spawn  b4  BBF BBF BBF BBF  eall  left  0.2  lin right 60
+spawn  b4  BBF BBF BBF BBF  eall  left  0.8  lin right 60
 wait  b4
 wait  b4
 wait  b4
+spawn  0  D0  none  left  0.5  for b1  move 0.2 0.5  after b1  shoot B4XRF  after b1  shoot 0  after b1  lin left 200
+wait  b4
+spawn  b4  BBF BBF BBF BBF  eall  top  0.2  lin bottom 60
+spawn  b4  BBF BBF BBF BBF  eall  top  0.8  lin bottom 60
 wait  b4
 wait  b4
 wait  b4
-wait  b4
+spawn  0  D0  none  left  0.5  for b1  move 0.2 0.5  after b1  shoot B4XRF  after b1  shoot 0  after b1  lin left 200
+spawn  0  D0  none  right  0.5  for b1  move 0.8 0.5  after b1  shoot B4XRF  after b1  shoot 0  after b1  lin right 200
 wait  b4
 
 # warning
+spawn  0  D0  none  left  0.1  for b2  move 2 0.1
+spawn  0  D0  none  right  0.9  for b2  move -1 0.9
+wait  b2
+spawn  0  D0  none  top  0.1  for b2  move 0.1 -1
+spawn  0  D0  none  bottom  0.9  for b2  move 0.9 2
+wait  b2
+spawn  0  D0  Seach  left  0.4  for b1  move 0.1094 0.5  after b1  shoot B2ZR  after b1  shoot B3WFD  for 0  move 0.5 0.5  for b16  sin top 0 c1 100  cos left 0 c1 100  after b16  shoot B6XRFD  lin left 200
+spawn  0  D0  Seach  right  0.4  for b1  move 0.8907 0.5  after b1  shoot B2ZR  after b1  shoot B3WFD  for 0  move 0.5 0.5  for b16  sin bottom 0 c1 100  cos right 0 c1 100  after b16  shoot B6XRFD  lin right 200
 wait  b4
 wait  b4
 wait  b4
 wait  b4
 wait  b4
+spawn  b2  BBFDKKK CBFDKKK  eall  right  0.3  lin left 80  sin bottom 0 c1 20
 wait  b4
-wait  b4
+spawn  b2  BBFDKKK CBFDKKK  pall  right  0.7  lin left 80  sin top 0 c1 20
 wait  b4
 
 # faster
 wait  b4
+# baloons
+repeat  b0.1  b8  0  G0  none  left  R0-0.9  lin right 80  lin top 80
+repeat  b0.1  b8  0  G0  none  bottom  R0-0.9  lin right 80  lin top 80
 wait  b4
 wait  b4
 wait  b4
+spawn  0  G0  eeach  bottom  0.4  lin right 40  lin top 60
 wait  b4
+spawn  0  G0  eeach  bottom  0.2  lin right 60  lin top 40
 wait  b4
+spawn  0  G0  peach  left  0.4  lin right 60  lin top 40
 wait  b4
+spawn  0  G0  peach  left  0.2  lin right 40  lin top 60
 wait  b4
+
+# skip part 2
+goto  148
 
 # part 2
 
@@ -112,3 +149,37 @@ wait  b4
 
 
 # run boss
+text
+music  fade  b3
+wait  b4
+music  play  music/boss.ogg  0.1  101.9607
+wait  b4
+spawn  0  E0  Seach  right  0.5  boss  \
+    shoot B4ZRDMM  for b2  move 0.8 0.5  after b2  shoot 0  (  \
+    for b2  move 0.5 0.8  after b2  shoot F8DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot B4DXRFN  after b1  shoot 0  after b1  \
+    for b2  move 0.5 0.2  after b2  shoot F8DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot B4DXRFN  after b1  shoot B4ZRDMM  after b1  \
+shoot 0  for 0  )  \
+stage pall  \
+    for 0  move 0.5 0.5  after 0  shoot 0  (  \
+        shoot B6ZRDMM  after b1  shoot K3R  after b3  shoot 0  after b1  shoot K3R  after b3  for 0  )  \
+stage pall  \
+    shoot B3ZRD  for 0  move 0.8907 0.5  after b4  shoot 0  (  \
+    for 0  move 0.5 0.5  \
+    for b2  sin top 0 c1 100  cos right 0 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p0.5 c1 100  cos right p0.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1 c1 100  cos right p1 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1.5 c1 100  cos right p1.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  \
+)
+
+wait  b4
+repeat  b16  9999999  0  G0  eeach  left  0.3  lin right 80
+wait  b8
+repeat  b16  9999999  0  G0  peach  left  0.7  lin right 80
+
+waitdefeated  b2
+wait  b6
+
+end

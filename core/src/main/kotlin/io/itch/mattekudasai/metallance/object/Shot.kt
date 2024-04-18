@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Vector2
 import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 
 class Shot(
-    val internalPosition: Vector2,
+    val initialPosition: Vector2,
     private val directionDt: ((shot: Shot, time: Float, delta: Float) -> Unit)? = null,
     texture: Texture? = null,
     private val textures: List<Pair<Texture, Float>> = texture?.let { listOf(texture to Float.MAX_VALUE) } ?: emptyList(),
@@ -15,6 +15,7 @@ class Shot(
 ) : SimpleSprite(textures[0].first) {
 
     val direction: Vector2 = initialDirection ?: Vector2()
+    val internalPosition: Vector2 = initialPosition.cpy()
     private val previousPosition = internalPosition.cpy()
     var internalTimer = 0f
         private set
@@ -22,6 +23,13 @@ class Shot(
     var offscreenTimeToDisappear = DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR // time to keep the shot off-screen, in case it will return back
     var currentTexture = 0
     var nextTextureIn = textures[0].second
+    var markedForRemoval = false
+        set(value) {
+            field = value
+            if (value) {
+                directionDt?.invoke(this, internalTimer, 0f) // notifies associated bombs to disappear via ShootingPattern
+            }
+        }
 
     fun update(delta: Float) {
         internalTimer += delta

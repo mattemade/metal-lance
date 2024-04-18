@@ -45,7 +45,6 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
 
     init {
         screen.autoDisposing()
-
     }
 
     fun updateScreenMode(mode: Int, stage: Int) {
@@ -57,6 +56,9 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
     }
 
     override fun render(delta: Float) {
+        if (totalGameTime == 0f) {
+            updateTint(Color.WHITE)
+        }
         totalGameTime += delta
         origShaderProgram.update(time = totalGameTime)
         frameBuffer.use {

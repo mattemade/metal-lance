@@ -19,9 +19,10 @@ class Bomb(
     private val fadeOutIn: Float,
     val outerColor: Color,
     val innerColor: Color? = null,
+    private val shapeRenderer: ShapeRenderer,
+    private val progress: (Float) -> Unit = { },
 ): Disposing by Self() {
 
-    private val shapeRenderer: ShapeRenderer by remember { ShapeRenderer() }
     private var internalTime = 0f
     private var finishesIn = maxRadius / speed
     private var currentRadius = 0f
@@ -39,9 +40,15 @@ class Bomb(
             // TODO: fix the problem of alpha lower than 0.127 to be visible
             innerColorMod?.a = (innerColorMod?.a ?: 0f) * factor
             outerColorMod.a = outerColor.a * factor
+            progress(factor)
+        } else if (internalTime >= finishesIn + stayFor + fadeOutIn) {
+            progress(0f)
+        } else {
+            progress(1f)
         }
 
-        return internalTime < finishesIn + stayFor + fadeOutIn
+        val result = internalTime < finishesIn + stayFor + fadeOutIn
+        return result
     }
 
     fun hits(position: Vector2, distance: Float): Boolean =

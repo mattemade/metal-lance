@@ -1,38 +1,41 @@
 setting  simulation
 tint  0.8  1.0  0.8
-wait  1
+music  play  music/tutorial.ogg  0.1f  123.9598
+wait  b4
 text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
-wait  3
+wait  b8
 text  MOVE WITH WASD\OR ARROWS  0.5  0.8
-wait  4
+wait  b8
 text  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
-wait  4
+wait  b8
 text  HOLD K OR Z TO ATTACK  0.5  0.8
-wait  4
+wait  b8
 text  DEFEAT ENEMIES  0.5  0.8
-spawn  0  A0 A0 A0  eeach  right  0.3 0.6  for 2  lin left 40
+spawn  0  A0  eeach  right  0.1  for b4  move 0.7 0.4
+spawn  0  A0  eeach  right  0.5  for b4  move 0.7 0.5
+spawn  0  A0  eeach  right  0.9  for b4  move 0.7 0.6
 waitdefeated  1
 text  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
-wait  4
+wait  b8
 text  HOLD J OR X TO PERFORM\THE LANCE STRIKE  0.5  0.8
-wait  4
+wait  b8
 text  PEIRCE THROUGH ENEMIES  0.5  0.8
 spawn  3  A0 A0 A0 A0 A0  eeach  right  0.5  lin left 40
-wait  2
-waitdefeated  1
+wait  b4
+waitdefeated  b4
 text  AVOID HAZARDS AND GOOD LUCK  0.5  0.8
-wait  2
+wait  b4
 spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  1
+wait  b2
 spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  1
+wait  b2
 spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  1
+wait  b2
 spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  1
+wait  b2
 spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
-wait  3
+wait  b6
 tint  0.8  1.0  0.8
 text  TEST RESULT: SUCCESS\FINISHING SIMULATION  0.5  0.8
-wait  6
+wait  b12
 end

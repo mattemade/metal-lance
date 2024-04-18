@@ -1,6 +1,5 @@
 package io.itch.mattekudasai.metallance.stage
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.Vector2
@@ -22,6 +21,7 @@ class Level(
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
     private val setTint: (tint: Color) -> Unit,
     private val playMusic: (assetPath: String, volume: Float) -> Unit,
+    private val fadeMusicOut: (forTime: Float) -> Unit,
     private val winningCondition: (condition: String, counter: Int) -> Unit,
     private val endSequence: () -> Unit,
     private val getWorldWidth: () -> Float,
@@ -51,8 +51,12 @@ class Level(
                 /* metaRepeaters.removeAll { !it.update(delta) }
                  repeaters.removeAll { !it.update(delta) }*/
             } else {
+                metaRepeaters.removeAll { !it.update(delta) }
+                repeaters.removeAll { !it.update(delta) }
                 return
             }
+            metaRepeaters.removeAll { !it.update(delta) }
+            repeaters.removeAll { !it.update(delta) }
             return
         }
         waitTime -= delta
@@ -74,6 +78,10 @@ class Level(
                         playMusic(split.getString(2), split.getFloat(3))
                         musicTempo = split.getFloat(4, 120f)
                     }
+
+                    "fade" -> {
+                        fadeMusicOut(split.getFloat(2))
+                    }
                 }
 
                 "tint" -> setTint(Color(split.getFloat(1), split.getFloat(2), split.getFloat(3), 1f))
@@ -92,6 +100,7 @@ class Level(
                     waitTime = split.getFloat(1) // this id MOD for internal timer, not the time really!!
                     waitingDefeated = true
                 }
+
                 "end" -> endSequence()
             }
         }
@@ -107,9 +116,9 @@ class Level(
         metaRepeaters += DelayedRepeater(
             nextDelay = { _, _ -> withinTime + delayBetweenRepeats },
             initialDelay = 0f,
-            action = { counter, time ->
+            action = { counter, periodicTime, totalTime ->
                 prepareSpawner(split, fromIndex = 3)
-                time <= repeatFor
+                totalTime <= repeatFor
             }
         )
     }
@@ -125,73 +134,121 @@ class Level(
             it.parseToFloat()
         }
         val subscription = ShootingPatternSubscription { musicTempo }
+        val stageRewards = mutableMapOf<Int, Char>()
+        var currentStage = 0
+        var updatePositionList = mutableListOf<Enemy.(time: Float) -> Any>()
         var updatePosition = resetPosition()
         var sequence = startSequence()
         var trajectoryIndex = currentIndex
         var from: Float = 0f
         var to: Float = Float.MAX_VALUE
-        var activePeriods = Stack<Pair<Float, Float>>()
-        while (trajectoryIndex < split.size) {
-            val trajectory = split.getString(trajectoryIndex++).split(" ")
+        var cancelling = false
+        var activePeriods = Stack<Triple<Float, Float, Boolean>>()
+        var currentSplit = split
+        var markedAsBoss = false
+        while (trajectoryIndex < currentSplit.size) {
+            val trajectory = currentSplit.getString(trajectoryIndex++).split(" ")
             val direction = trajectory.getString(1).toNormal()
             when (trajectory.getString(0)) {
+                "\\" -> {
+                    val line = lines[this.currentIndex++]
+                    currentSplit = line.split("  ")
+                    trajectoryIndex = 0
+                    continue
+                }
+
                 "after" -> {
                     from += trajectory.getFloat(1)
                     to = Float.MAX_VALUE
+                    cancelling = false
+                }
+
+                "cancelafter" -> {
+                    from += trajectory.getFloat(1)
+                    to = Float.MAX_VALUE
+                    cancelling = true
                 }
 
                 "for" -> to = from + trajectory.getFloat(1)
                 "(" -> {
                     // TODO: it does not work properly yet!!!
                     updatePosition += sequence
-                    activePeriods.push(from to to)
+                    activePeriods.push(Triple(from, to, cancelling))
                     from = 0f
                     to = Float.MAX_VALUE
+                    cancelling = false
                     sequence = startSequence()
                 }
 
                 ")" -> {
-                    sequence = sequence.wrapSequence(from, to)
+                    sequence = sequence.wrapSequence(to)
                     val lastActivePeriod = activePeriods.pop()
                     from = lastActivePeriod.first
                     to = lastActivePeriod.second
-                    updatePosition += sequence.activeIn(from, to)
+                    cancelling = lastActivePeriod.third
+                    updatePosition += sequence.activeIn(from, to, cancelling)
                     sequence = startSequence()
                 }
 
-                "lin" -> sequence += linearTrajectory(direction, trajectory.getFloat(2)).activeIn(from, to)
+                "lin" -> sequence += linearTrajectory(direction, trajectory.getFloat(2)).activeIn(from, to, cancelling)
                 "sin" -> sequence += sinTrajectory(
                     direction,
                     trajectory.getFloat(2),
                     trajectory.getFloat(3),
                     trajectory.getFloat(4)
-                ).activeIn(from, to)
+                ).activeIn(from, to, cancelling)
+
                 "cos" -> sequence += cosTrajectory(
                     direction,
                     trajectory.getFloat(2),
                     trajectory.getFloat(3),
                     trajectory.getFloat(4)
-                ).activeIn(from, to)
+                ).activeIn(from, to, cancelling)
 
                 "move" -> sequence += directedTrajectory(
                     Vector2(trajectory.getFloat(1) * getWorldWidth(), trajectory.getFloat(2) * getWorldHeight()),
                     to - from
-                ).activeIn(from, to)
+                ).activeIn(from, to, cancelling)
 
                 "shoot" -> {
-                    // TODO: it does not work properly in sequences!!!
-                    sequence += changeShootingPattern(subscription, trajectory.getString(1), from)
+                    sequence += changeShootingPattern(subscription, trajectory.getString(1)).activeIn(
+                        from,
+                        from + 0.125f, // just some not very low and not very high number, so the changing pattern could be called at least once
+                        false
+                    )
+                }
+
+                "stage" -> {
+                    if (activePeriods.isNotEmpty()) {
+                        throw IllegalStateException("Should not switch the stage from within the sequence")
+                    }
+                    stageRewards[currentStage++] = trajectory.getString(1).toReward(group.size).type
+                    updatePosition += sequence.activeIn(from, to, cancelling)
+                    updatePositionList += updatePosition
+                    updatePosition = resetPosition()
+                    sequence = startSequence()
+                    from = 0f
+                    to = Float.MAX_VALUE
+                    cancelling = false
+                }
+
+                "boss" -> {
+                    markedAsBoss = true
                 }
             }
         }
-        updatePosition += sequence
+        if (activePeriods.isNotEmpty()) {
+            throw IllegalStateException("Should end the sequence before ending the pattern")
+        }
+        updatePosition += sequence.wrapSequence(to)//.activeIn(from, to, cancelling)
+        updatePositionList += updatePosition
 
         val groupSizeLessOneFloat = (group.size - 1).toFloat()
         val sideFactorsSizeLessOne = sideFactors.size - 1
         repeaters += DelayedRepeater(
             nextDelay = { _, _ -> period },
             initialDelay = 0f,
-            action = { counter, time ->
+            action = { counter, periodicTime, totalTime ->
                 val indexInGroup = counter - 1
                 val enemyLine = group[indexInGroup]
                 val sideFactorPosition = indexInGroup / groupSizeLessOneFloat * sideFactorsSizeLessOne
@@ -212,10 +269,11 @@ class Level(
                         shootingPatternSubscription = subscription,
                         spawnSide = spawnSide,
                         spawnSideFactor = sideFactor,
-                        updatePositionDt = updatePosition,
+                        updatePositionDt = updatePositionList,
                         initialHitPoints = health.first,
                         invincibilityPeriod = health.second,
                         onRemoved = {
+                            subscription.unsubscribe(it)
                             spawnedEnemies--
                         },
                         onDefeat = {
@@ -224,7 +282,11 @@ class Level(
                             } else {
                                 null
                             }
-                        }
+                        },
+                        onStageDefeat = {
+                            stageRewards[it]
+                        },
+                        isBoss = markedAsBoss
                     )
                 )
                 val substring = enemyLine.substring(1)
@@ -248,6 +310,7 @@ class Level(
             'D' -> 3 to 1f
             'E' -> 30 to 0f // level 1 boss
             'F' -> 50 to 0f // level 2 boss
+            'G' -> 1 to 0f // baloon
             else -> 1 to 0f
         }
 
@@ -259,43 +322,44 @@ class Level(
         else -> Align.right
     }
 
-    private inline fun (Enemy.(time: Float) -> Any).activeIn(from: Float, to: Float): (Enemy.(time: Float) -> ActiveInMarker) =
+    private inline fun (Enemy.(time: Float) -> Any).activeIn(
+        from: Float,
+        to: Float,
+        cancelling: Boolean
+    ): (Enemy.(time: Float) -> Unit) =
         { time ->
-            this@activeIn(
-                if (time >= from) {
-                    if (time < to) time - from else to - from
-                } else 0f
-            )
-            ActiveInMarker
+            if (time >= from && (!cancelling || time <= to)) {
+                this@activeIn(
+                    if (time >= from) {
+                        if (time < to) time - from else to - from
+                    } else 0f
+                )
+            }
         }
 
-    private inline operator fun (Enemy.(time: Float) -> Any).plus(crossinline another: Enemy.(time: Float) -> Any): Enemy.(time: Float) -> PlusMarker =
+    private inline operator fun (Enemy.(time: Float) -> Any).plus(crossinline another: Enemy.(time: Float) -> Any): Enemy.(time: Float) -> Unit =
         { time ->
             this@plus(time)
             another(time)
-            PlusMarker
         }
 
     private fun startSequence(): Enemy.(time: Float) -> Any = { }
 
-    private inline fun (Enemy.(time: Float) -> Any).wrapSequence(from: Float, to: Float): (Enemy.(time: Float) -> WrapSeqMarker) =
+    private inline fun (Enemy.(time: Float) -> Any).wrapSequence(limit: Float): (Enemy.(time: Float) -> Unit) =
         { time ->
             var remainingTime = time
             while (remainingTime > 0f) {
-                val actualTime = min(remainingTime, to)
-                if (actualTime >= from) {
-                    this@wrapSequence(actualTime)
-                }
-                remainingTime -= to
+                val actualTime = min(remainingTime, limit)
+                this@wrapSequence(actualTime)
+                remainingTime -= limit
             }
-            WrapSeqMarker
         }
 
     private fun resetPosition(): Enemy.(time: Float) -> Any = {
         internalPosition.set(initialPosition)
     }
 
-    private fun linearTrajectory(direction: Int, speed: Float): Enemy.(time: Float) -> LinMarker = { time ->
+    private fun linearTrajectory(direction: Int, speed: Float): Enemy.(time: Float) -> Unit = { time ->
         internalPosition.add(
             when {
                 Align.isRight(direction) -> time * speed
@@ -308,40 +372,32 @@ class Level(
                 else -> 0f
             }
         )
-        LinMarker
     }
 
-    private fun directedTrajectory(position: Vector2, toMinusFromTime: Float): Enemy.(time: Float) -> DirectedMarker = { time ->
+    private fun directedTrajectory(position: Vector2, toMinusFromTime: Float): Enemy.(time: Float) -> Unit = { time ->
         if (time >= toMinusFromTime) {
             internalPosition.set(position)
         } else {
             internalPosition.add(position.cpy().sub(internalPosition).scl(time / toMinusFromTime))
         }
-        DirectedMarker
     }
-
-    object DirectedMarker
-    object SinMarker
-    object CosMarker
-    object PlusMarker
-    object LinMarker
-    object WrapSeqMarker
-    object ActiveInMarker
 
 
     private fun changeShootingPattern(
         subscription: ShootingPatternSubscription,
         pattern: String,
-        from: Float
     ): Enemy.(time: Float) -> Unit {
         var changed = false
+        var lastTime = Float.MAX_VALUE
         return { time ->
-            if (time < from) {
+            if (time < lastTime) {
                 changed = false
-            } else if (!changed) {
+            }
+            if (!changed) {
                 subscription.onChanged(pattern)
                 changed = true
             }
+            lastTime = time
         }
     }
 
@@ -351,7 +407,7 @@ class Level(
         start: Float,
         speed: Float,
         amplitude: Float
-    ): Enemy.(time: Float) -> SinMarker = { time ->
+    ): Enemy.(time: Float) -> Unit = { time ->
         internalPosition.add(
             when {
                 Align.isRight(direction) -> sin(start + time * speed) * amplitude
@@ -364,7 +420,6 @@ class Level(
                 else -> 0f
             }
         )
-        SinMarker
     }
 
     private inline fun cosTrajectory(
@@ -372,7 +427,7 @@ class Level(
         start: Float,
         speed: Float,
         amplitude: Float
-    ): Enemy.(time: Float) -> CosMarker = { time ->
+    ): Enemy.(time: Float) -> Unit = { time ->
         internalPosition.add(
             when {
                 Align.isRight(direction) -> cos(start + time * speed) * amplitude
@@ -385,7 +440,6 @@ class Level(
                 else -> 0f
             }
         )
-        CosMarker
     }
 
     private fun List<String>.getString(index: Int, defaultValue: String = ""): String =
@@ -417,6 +471,10 @@ class Level(
             from + Random.nextFloat() * to
         } else if (this[0] == 'b') {
             this.substring(1).toFloat() * 60f / musicTempo
+        } else if (this[0] == 'c') { // angle speed to make a full circle in 8 beats and quater in 32b
+            kotlin.math.PI.toFloat() / (4f * this.substring(1).toFloat() * 60f / musicTempo)
+        } else if (this[0] == 'p') { // multiplier of pi
+            kotlin.math.PI.toFloat() * this.substring(1).toFloat()
         } else {
             this.toFloat()
         }
@@ -443,11 +501,13 @@ class Level(
         val shootingPatternSubscription: ShootingPatternSubscription,
         val spawnSide: Int = Align.right, // e.g. "where does it come from?"
         val spawnSideFactor: Float = 0.5f, // e.g. "how far from 0 to SIDE_LENGTH does it come from?"
-        val updatePositionDt: Enemy.(time: Float) -> Any,
+        val updatePositionDt: List<Enemy.(time: Float) -> Any>,
         val initialHitPoints: Int,
         val invincibilityPeriod: Float,
-        val onRemoved: () -> Unit,
-        val onDefeat: () -> Char?
+        val onRemoved: (Enemy) -> Unit,
+        val onDefeat: () -> Char?,
+        val onStageDefeat: (Int) -> Char?,
+        val isBoss: Boolean,
     )
 
     private class Reward(
@@ -457,12 +517,12 @@ class Level(
 
     class ShootingPatternSubscription(val tempoProvider: () -> Float) {
 
-        private var activeSubscription: ((Long) -> Unit)? = null
+        private var activeSubscriptions = mutableMapOf<Any, (Long) -> Unit>()
         private var lastKnownPattern: Long = -1
         fun onChanged(pattern: Long) {
             if (pattern != lastKnownPattern) {
                 lastKnownPattern = pattern
-                activeSubscription?.invoke(pattern)
+                activeSubscriptions.values.forEach { it(pattern) }
             }
         }
 
@@ -470,15 +530,19 @@ class Level(
             val pattern = code.toPatternInt()
             if (pattern != lastKnownPattern) {
                 lastKnownPattern = pattern
-                activeSubscription?.invoke(pattern)
+                activeSubscriptions.values.forEach { it(pattern) }
             }
         }
 
-        fun subscribe(action: (Long) -> Unit) {
-            activeSubscription = action
+        fun subscribe(key: Any, action: (Long) -> Unit) {
+            activeSubscriptions += key to action
             if (lastKnownPattern > -1) {
                 action.invoke(lastKnownPattern)
             }
+        }
+
+        fun unsubscribe(key: Any) {
+            activeSubscriptions -= key
         }
     }
 }

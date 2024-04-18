@@ -31,7 +31,7 @@ class GameOverScreen(
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
     private val shipTexture: Texture by remember { Texture("texture/ship/normal.png".overridable) }
-    private val music: Music by remember { Gdx.audio.newMusic("music/title.ogg".overridable) }
+    private val music: Music by remember { Gdx.audio.newMusic("music/gameover.ogg".overridable) }
     private var musicShouldBeResumed = false
     private var internalTimer = 0f
     private var selection = if (showEasyMode) 1 else 0
@@ -52,7 +52,6 @@ class GameOverScreen(
     init {
         music.play()
         music.volume = 0.1f
-        music.isLooping = true
     }
     override fun render(delta: Float) {
         internalTimer += delta

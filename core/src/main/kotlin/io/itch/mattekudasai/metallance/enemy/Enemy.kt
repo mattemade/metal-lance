@@ -11,14 +11,17 @@ class Enemy(
     texture: Texture,
     private val explosionTexture: Texture,
     val initialPosition: Vector2,
-    private val updatePositionDt: Enemy.(t: Float) -> Any = { },
+    private val updatePositionDt: List<Enemy.(t: Float) -> Any> = emptyList(),
     private val shot: (Enemy) -> Unit,
-    private val initialHitPoints: Int = 1,
+    val initialHitPoints: Int = 1,
     private val invincibilityPeriod: Float = 0f,
-    val onRemoved: () -> Unit,
+    val onRemoved: (Enemy) -> Unit,
+    private val onStageDefeat: (Int) -> Char?,
     private val onDefeat: () -> Char?,
     private val hitSound: Sound,
     private val explodeSound: Sound,
+    val isBoss: Boolean,
+    val isBaloon: Boolean,
 ) : SimpleSprite(texture) {
 
     val internalPosition: Vector2 = initialPosition.cpy()
@@ -34,27 +37,54 @@ class Enemy(
 
     private var timeToMortal = 0f
     val isInvincible: Boolean
-        get() = isAlive && timeToMortal > 0f
+        get() = isAlive && (timeToMortal > 0f || scream > 0f || stageResetsIn > 0f)
 
     private var lastHitSound = -1L
+    private var currentStage = 0
+    private var previousStageTimer = 0f
+    private var currentStageTimer = 0f
 
     var shootingPattern: ShootingPattern? = null
         set(value) {
             value?.let {
-                shootingRepeater = DelayedRepeater(it.nextDelay, it.initialDelay) { _, _ -> shot(this); true }
+                shootingRepeater = DelayedRepeater(it.nextDelay, it.initialDelay) { _, _, _-> shot(this); true }
             }
             field = value
         }
 
     private var shootingRepeater: DelayedRepeater? = null
 
+    private val stageSize = initialHitPoints / updatePositionDt.size // e.g. 5 for 2 stage with 10 hp
+    private var scream = 0f
+    private var stageResetsIn = 0f
+    private var transitionVector = Vector2()
 
     fun update(delta: Float) {
         if (isAlive) {
             timeToMortal -= delta
             internalTimer += delta
             previousPosition.set(internalPosition)
-            updatePositionDt(internalTimer)
+            val newStage = (initialHitPoints - hitPoints) / stageSize
+            if (currentStage != newStage) {
+                currentStage = newStage
+                previousStageTimer = currentStageTimer
+                currentStageTimer = -delta
+                scream = SCREAM_TIME
+                stageResetsIn = TRANSITION_TIME
+            }
+            if (scream > 0f) {
+                scream -= delta
+            } else if (stageResetsIn > 0f) {
+                stageResetsIn = max(0f, stageResetsIn - delta)
+                updatePositionDt.getOrNull(currentStage-1)?.invoke(this, previousStageTimer)
+                previousPosition.set(internalPosition)
+                updatePositionDt.getOrNull(currentStage)?.invoke(this, 0f)
+                transitionVector.set(previousPosition).sub(internalPosition).scl(stageResetsIn / TRANSITION_TIME)
+                internalPosition.add(transitionVector)
+            } else {
+                currentStageTimer += delta
+                updatePositionDt.getOrNull(currentStage)?.invoke(this, currentStageTimer)
+            }
             setPosition(internalPosition.x, internalPosition.y)
             shootingRepeater?.update(delta)
         } else {
@@ -73,7 +103,11 @@ class Enemy(
         hitPoints = max(0, hitPoints - damage)
         if (isAlive) {
             timeToMortal = invincibilityPeriod
-            lastHitSound = hitSound.playSingleLow(lastHitSound, volume = 0.2f)
+            lastHitSound = hitSound.playSingleLow(lastHitSound, volume = 0.15f)
+            val newStage = (initialHitPoints - hitPoints) / stageSize
+            if (currentStage != newStage) {
+                return onStageDefeat(currentStage)
+            }
             return null
         }
         explodeSound.playSingleLow(volume = 0.15f)
@@ -84,6 +118,8 @@ class Enemy(
 
     companion object {
         const val DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR = 0.5f
+        const val SCREAM_TIME = 1f
+        const val TRANSITION_TIME = 1f
     }
 
 }

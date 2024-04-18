@@ -27,10 +27,10 @@ class ShootingPattern(
         private const val MAX_SPEED = 200f
         private const val MIN_START_HOMING_DISTANCE = 0f
         private const val MAX_START_HOMING_DISTANCE = 40f
-        private const val MIN_HOMING_TIME = 0f
+        private const val MIN_HOMING_TIME = 0.04f // just to have at least one activation frame
         private const val MAX_HOMING_TIME = 10f
         private const val MIN_TIME_TO_LIVE_FACTOR = 0.1f
-        private const val MAX_TIME_TO_LIVE_FACTOR = 1f
+        private const val MAX_TIME_TO_LIVE_FACTOR = 3f
 
         fun String.toPatternInt(): Long {
             var result = 0L
@@ -40,29 +40,49 @@ class ShootingPattern(
                     result =
                         when (c) {
                             'A' -> 0 // does not shoot
-                            'B' -> 1472000119L // slowly shoots towards the player
-                            'C' -> 1472000009L // slowly shoots forward
-                            'D' -> 1154000119L // faster shooting towards the player
-                            'E' -> 1152002119L // slowly shooting towards the player, slow and short homing
-                            'F' -> 1153003939L // faster shooting towards the player, slow starting better and longer homing
-                            'G' -> 1154003139L // faster shooting towards the player, better and longer homing
-                            'H' -> 1535000001L // quick short spree forward
-                            'J' -> 5555109990L // ???
+                            'B' -> 1472000119000L // slowly shoots towards the player
+                            'C' -> 1472000009000L // slowly shoots forward
+                            'D' -> 1154000119000L // faster shooting towards the player
+                            'E' -> 1152002119000L // slowly shooting towards the player, slow and short homing
+                            'F' -> 1153003939000L // faster shooting towards the player, slow starting better and longer homing
+                            'G' -> 1154003139000L // faster shooting towards the player, better and longer homing
+                            'H' -> 1535000001000L // quick short spree forward
+                            'J' -> 5555109990000L // ???
+                            'K' -> 1015009119000L // quick long spree towards the player
                             //     cdpsggahhtiii
-                            'Z' -> 1535000001L // quick short spree forward
+                            'Z' -> 1535009001000L // quick short spree forward
                             else -> 0
                         }.reverse()
                 } else {
                     result =
                         when (c) {
                             in '2'..'9' -> result.replace(0) { c - '0' }
-                            'F' -> result.replace(2) { max(0, this - 1) } // faster
+                            'F' -> result.replace(2) { max(0, this - 1) } // faster, shorter period
                             'D' -> result.replace(1) { 0 } // don't wait before shooting
                             'S' -> result.replace(4) { 2 } // spread
                             'W' -> result.replace(4) { 5 } // widespread
                             'R' -> result.replace(4) { 9 } // round
                             'Q' -> result.replace(5) { 5 } // queued group of half period
                             'T' -> result.replace(5) { 9 } // queued group during full period
+                            'L' -> result.replace(8) { max(0, this - 1) } // lesser homing period
+                            'N' -> result.replace(9) { 9 } // neverending
+                            'M' -> result.replace(9) { max(0, this - 1) } // mock, die faster
+                            'K' -> result.replace(3) { min(9, this + 1) } // kuickier, moving faster
+                            'B' -> {
+                                result = result.replace(10) { 8 }.reverse()
+                                result = result.replace(11) { 2 }.reverse()
+                                result.replace(12) { 1 }
+                            } // bomb
+                            'Z' -> {
+                                result = result.replace(10) { 9 }.reverse()
+                                result = result.replace(11) { 2 }.reverse()
+                                result.replace(12) { 1 }
+                            } // boss shield out of bombs
+                            'X' -> {
+                                result = result.replace(10) { 0 }.reverse()
+                                result = result.replace(11) { 3 }.reverse()
+                                result.replace(12) { 1 }
+                            } // boss circle of bombs
                             else -> result
                         }.reverse()
                 }
@@ -75,7 +95,7 @@ class ShootingPattern(
             var result = 0L
             var input = this
             var placeRemains = place
-            while (input > 0L) {
+            while (placeRemains >= 0 || input > 0L) {
                 result *= 10
                 result += if (placeRemains == 0) (input % 10).toInt().by().toLong() else input % 10
                 input /= 10
@@ -140,6 +160,21 @@ class ShootingPattern(
                 },
                 textureIndex.toInt(),
             ) { enemy, flagshipPosition, texture ->
+                if (textureIndex == 129L) {
+                    val rotation =
+                    if (startAngle != 0f && anglePerShot != 0f) {
+                        -startAngle + anglePerShot * shotCounter
+                    } else 0f
+                    shotCounter = (shotCounter + 1) % countPerShot.toInt()
+                    return@ShootingPattern spawnCirclingShot(enemy, texture, rotation, timeToLiveFloat, restricted = true)
+                } else if (textureIndex == 130L) {
+                    val rotation =
+                        if (startAngle != 0f && anglePerShot != 0f) {
+                            -startAngle + anglePerShot * shotCounter
+                        } else 0f
+                    shotCounter = (shotCounter + 1) % countPerShot.toInt()
+                    return@ShootingPattern spawnCirclingShot(enemy, texture, rotation, timeToLiveFloat, restricted = false)
+                }
                 spawnHomingEnemyShot(
                     enemy,
                     flagshipPosition,
@@ -197,6 +232,32 @@ class ShootingPattern(
                             minAbs(it, maxAngularSpeed * delta * sign(it))
                         }
                         shot.direction.setAngleDeg(currentAngle + desiredRotation)
+                    }
+                },
+                texture = texture,
+                timeToLive = timeToLive,
+            )
+        )
+
+        private val tempPosition = Vector2()
+
+        private fun spawnCirclingShot(
+            enemy: Enemy,
+            texture: Texture,
+            rotation: Float,
+            timeToLive: Float,
+            restricted: Boolean,
+        ) = listOf(
+            Shot(
+                enemy.internalPosition.cpy(),
+                initialDirection = Vector2(0f, 0f),
+                directionDt = { shot, time, delta ->
+                    if (enemy.isAlive && !shot.markedForRemoval) {
+                        val length = min(if (restricted) enemy.width * 1.5f else 10000f, time*40f)
+                        tempPosition.set(length, 0f).rotateDeg(rotation + time*100f)
+                        shot.internalPosition.set(if (restricted) enemy.internalPosition else shot.initialPosition).add(tempPosition)
+                    } else {
+                        shot.internalPosition.set(-100f, -100f)
                     }
                 },
                 texture = texture,

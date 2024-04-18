@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputProcessor
 import io.itch.mattekudasai.metallance.screen.AutoPausingScreen
+import io.itch.mattekudasai.metallance.screen.DisclaimerScreen
 import io.itch.mattekudasai.metallance.screen.GameOverScreen
 import io.itch.mattekudasai.metallance.screen.GameScreen
 import io.itch.mattekudasai.metallance.screen.IntroScreen
@@ -28,8 +29,12 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                 )
             )
         } else {
-            showIntro()
+            showDisclaimer()
         }
+    }
+
+    private fun showDisclaimer() {
+        switchToScreen(DisclaimerScreen( { showIntro() }, { getScreen<PixelPerfectScreen>().updateTint(it) }))
     }
 
     private fun showIntro() {
@@ -71,7 +76,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                     showGameOver(it)
                 },
                 advance = {
-                    if (it.easyMode) {
+                    if (it.easyMode && it.levelPath != "levels/stage3.txt") {
                         showTurnOffEasyMode(it)
                     } else {
                         startNextLevel(it)
@@ -88,7 +93,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     private fun startNextLevel(it: GameScreen.Configuration) {
         when (it.levelPath) {
             "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
-            "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
+            "levels/stage2.txt" -> showDisclaimer()//showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
             "levels/stage3.txt" -> showOutro()
             "levels/tutorial.txt" -> showTitle()
         }

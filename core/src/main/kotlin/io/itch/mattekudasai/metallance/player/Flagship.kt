@@ -85,6 +85,7 @@ class Flagship(
     private val upgradeSound: Sound by remember { Gdx.audio.newSound("sound/upgrade_ship.ogg".overridable) }
     private val fullPowerSound: Sound by remember { Gdx.audio.newSound("sound/full_power.ogg".overridable) }
     private val beyondFullPowerSound: Sound by remember { Gdx.audio.newSound("sound/beyond_full_power.ogg".overridable) }
+    private val lanceSound: Sound by remember { Gdx.audio.newSound("sound/lance.ogg".overridable) }
     init {
         shipType = initialShipType
     }
@@ -131,10 +132,13 @@ class Flagship(
     fun update(delta: Float) {
         timeToStartOver -= delta
         if (!isLancing && state.wantToLance && charge > 0) {
+            lanceSound.playSingleLow(volume = 0.15f)
             isLancing = true
             charge--
         }
         if (isLancing && !state.wantToLance) {
+            lanceSound.stop()
+            explodeSound.playSingleLow()
             isLancing = false
         }
         if (!isLancing && visibleTrailFactor > 0f) {
@@ -234,6 +238,10 @@ class Flagship(
         if (!easyMode && oldShipType != shipType) {
             power = 0
         }
+    }
+
+    fun playPickupSound() {
+        playPowerUpSound(0)
     }
 
     // TODO: maybe reuse is for game over?

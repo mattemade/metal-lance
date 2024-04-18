@@ -100,3 +100,77 @@ wait  b4
 wait  b4
 wait  b4
 wait  b4
+
+
+
+
+# run boss
+text
+music  fade  b3
+wait  b4
+music  play  music/boss.ogg  0.1  101.9607
+wait  b4
+spawn  0  E0  Seach  right  0.5  boss  \
+    shoot 0  for b2  move 0.8 0.5  after b2  (  \
+    for b2  move 0.5 0.8  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.5 0.2  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+for 0  )  \
+stage pall  \
+    shoot 0  for 0  move 0.5 0.5  after 0  (  \
+        shoot K3R  after b3  shoot 0  after b1  for 0  )  \
+stage pall  \
+    shoot 0  for 0  move 0.8907 0.5  after b4  (  \
+    for 0  move 0.5 0.5  \
+    for b2  sin top 0 c1 100  cos right 0 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p0.5 c1 100  cos right p0.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1 c1 100  cos right p1 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1.5 c1 100  cos right p1.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  \
+)
+
+waitdefeated  b2
+# run mothership
+wait  b4
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+wait  b1
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+wait  b1
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+wait  b1
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
+wait  b1
+
+music  play  music/stage1.ogg  0.1  128.5714
+spawn  0  E0  Seach  right  0.5  boss  \
+    shoot 0  for b2  move 0.8 0.5  after b2  (  \
+    for b2  move 0.5 0.8  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.5 0.2  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+    for b2  move 0.8 0.5  after b2  shoot F5DRLL  after b1  shoot 0  after b1  \
+for 0  )  \
+stage pall  \
+    shoot 0  for 0  move 0.5 0.5  after 0  (  \
+        shoot K3R  after b3  shoot 0  after b1  for 0  )  \
+stage pall  \
+    shoot 0  for 0  move 0.8907 0.5  after b4  (  \
+    for 0  move 0.5 0.5  \
+    for b2  sin top 0 c1 100  cos right 0 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p0.5 c1 100  cos right p0.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1 c1 100  cos right p1 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1.5 c1 100  cos right p1.5 c1 100  \
+    after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  \
+)
+waitdefeated  b2
+wait  b6
+
+end
