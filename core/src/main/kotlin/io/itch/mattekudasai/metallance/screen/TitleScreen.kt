@@ -1,5 +1,6 @@
 package io.itch.mattekudasai.metallance.screen
 
+import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.audio.Music
@@ -23,7 +24,12 @@ import ktx.graphics.use
 
 class TitleScreen(
     val startTutorial: () -> Unit,
-    val startGame: () -> Unit
+    val startGame: (level: String?) -> Unit,
+    val showDisclaimer: () -> Unit,
+    val showIntro: () -> Unit,
+    val showGameOver: (withEasyMode: Boolean) -> Unit,
+    val showTurnOffEasyMode: () -> Unit,
+    val showOutro: () -> Unit,
 ) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
@@ -103,6 +109,8 @@ class TitleScreen(
         viewport.setScreenSize(width, height)
     }
 
+    private var code = ""
+
     override fun keyDown(keycode: Int): Boolean {
         if (isPaused) {
             return false
@@ -111,12 +119,36 @@ class TitleScreen(
             music.stop()
             when (selection) {
                 0 -> startTutorial()
-                1 -> startGame()
+                1 -> startGame(null)
             }
         } else if (keycode.isUp) {
             selection = (selection + menuItems.size - 1) % menuItems.size
         } else if (keycode.isDown) {
             selection = (selection + 1) % menuItems.size
+        }
+        if (Gdx.app.logLevel == Application.LOG_DEBUG) {
+            if (keycode >= Keys.NUM_1 && keycode <= Keys.NUM_9) {
+                music.stop()
+            }
+            when (keycode) {
+                Keys.NUM_1 -> startGame("levels/stage1.txt")
+                Keys.NUM_2 -> startGame("levels/stage2.txt")
+                Keys.NUM_3 -> startGame("levels/stage3.txt")
+                Keys.NUM_4 -> showDisclaimer()
+                Keys.NUM_5 -> showIntro()
+                Keys.NUM_6 -> showGameOver(false)
+                Keys.NUM_7 -> showGameOver(true)
+                Keys.NUM_8 -> showTurnOffEasyMode()
+                Keys.NUM_9 -> showOutro()
+            }
+        } else {
+            if (keycode >= Keys.A && keycode <= Keys.Z) {
+                code += 'a' + (keycode - Keys.A)
+                if (code.length > 4 && code.substring(code.length - 5) == "debug") {
+                    music.stop()
+                    Gdx.app.logLevel = Application.LOG_DEBUG
+                }
+            }
         }
         return true
     }

@@ -40,6 +40,7 @@ class Flagship(
 
     private val state = State(40f, worldHeight / 2f)
     val internalPosition: Vector2 get() = state.position
+    val previousPosition: Vector2 = internalPosition.cpy()
     val startLancingPosition: Vector2 get() = state.startLancingPosition
     val endLancingPosition: Vector2 get() = state.endLancingPosition
     val rearPosition = Vector2()
@@ -140,6 +141,7 @@ class Flagship(
             lanceSound.stop()
             explodeSound.playSingleLow()
             isLancing = false
+            timeToStartOver = 0.2f // small invisibility time at the end of lance attack
         }
         if (!isLancing && visibleTrailFactor > 0f) {
             visibleTrailFactor = max(0f, visibleTrailFactor - delta)
@@ -183,6 +185,7 @@ class Flagship(
             }
         }
 
+        previousPosition.set(internalPosition)
         with(state.position) {
             add(movingTo)
             if (x < halfWidth) {
@@ -192,6 +195,7 @@ class Flagship(
                 if (isLancing) {
                     state.wantToLance = false
                     state.wantToLance = false // just in case of double-button-hold
+                    timeToStartOver = 0.2f // small invisibility time at the end of lance attack
                 }
             }
             if (y < hudHeight + halfHeight) {

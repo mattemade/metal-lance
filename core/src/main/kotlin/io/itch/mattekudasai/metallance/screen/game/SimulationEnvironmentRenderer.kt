@@ -17,16 +17,22 @@ class SimulationEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
     private val colors = List(2) { Color.WHITE.cpy().mul(sqrt(1f / (128f - it * 100f))) }
     private val translucentColor = Color(0.316f, 0.316f, 0.316f, 0.7f)
 
-    override fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {
+    private var lastKnownFlagshipX = 0f
+    private var lastKnownFlagshipY = 0f
+    override fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {
+        flagshipPosition?.let {
+            lastKnownFlagshipX = it.x
+            lastKnownFlagshipY = it.y
+        }
         shapeRenderer.use(ShapeRenderer.ShapeType.Line, camera) { renderer ->
             for (i in 0..1) {
                 val density = 8 - i * 3
                 val netWidth = viewport.worldWidth / density
                 val netHeight = viewport.worldHeight / density
                 val xOffset =
-                    netWidth - (((time * (i + 1).toFloat()) * 20f + flagshipPosition.x * (i + 1).toFloat() * 0.025f) % netWidth)
+                    netWidth - (((time * (i + 1).toFloat()) * 20f + lastKnownFlagshipX * (i + 1).toFloat() * 0.025f) % netWidth)
                 val yOffset =
-                    netHeight - (flagshipPosition.y * (i + 1).toFloat() * 0.125f) % netHeight
+                    netHeight - (lastKnownFlagshipY * (i + 1).toFloat() * 0.125f) % netHeight
                 for (j in 0..density step 2) {
                     val x = xOffset + j * netWidth
                     val y = yOffset + j * netHeight
@@ -39,7 +45,7 @@ class SimulationEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
         }
     }
 
-    override fun renderForeground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {
+    override fun renderForeground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {
         val netWidth = viewport.worldWidth * 2f
         val xOffset = netWidth - ((time * 120f) % netWidth)
         withTransparency {

@@ -12,41 +12,33 @@ import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.files.overridable
 import ktx.graphics.use
 
-class CityEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
+class CloudsEnvironmentRenderer : EnvironmentRenderer, Disposing by Self() {
 
 
-    private val bg0TexturePack = TexturePack (
-        Texture("texture/level/city_bg0.png".overridable).autoDisposing(),
-        tint = Color(0.1f, 0.1f, 0.1f, 1f),
-        30f,
-        0.125f,
-        offsetY = 20f
-    )
-
-    private val bg1TexturePack = TexturePack (
-        Texture("texture/level/city_bg1.png".overridable).autoDisposing(),
-        tint = Color(0.224f, 0.224f, 0.224f, 1f),
+    private val earthTexturePack = TexturePack (
+        Texture("texture/level/clouds_bg.png".overridable).autoDisposing(),
+        tint = Color(1f, 1f, 1f, 1f),
         60f,
-        0.250f,
+        0.25f,
+        offsetY = -100f
     )
 
     private val spriteBatch: SpriteBatch by remember { SpriteBatch() }
 
     override fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {
-        bg0TexturePack.draw(viewport, camera, time, flagshipPosition)
-        bg1TexturePack.draw(viewport, camera, time, flagshipPosition)
+        earthTexturePack.draw(viewport, camera, time, flagshipPosition)
     }
-
 
     private var lastKnownFlagshipX = 0f
     private var lastKnownFlagshipY = 0f
+
     private fun TexturePack.draw(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {
         flagshipPosition?.let {
             lastKnownFlagshipX = it.x
             lastKnownFlagshipY = it.y
         }
-        val xOffset = -((time + lastKnownFlagshipX * 0.0016f) * parallaxX % textureWidth)
-        val yOffset = offsetY - (lastKnownFlagshipY * parallaxY) % textureHeight
+        val xOffset = - ((time + lastKnownFlagshipX * 0.0016f) * parallaxX) % textureWidth
+        val yOffset = offsetY - (lastKnownFlagshipY * parallaxY)
         spriteBatch.use(camera) {
             it.color = tint
             it.draw(

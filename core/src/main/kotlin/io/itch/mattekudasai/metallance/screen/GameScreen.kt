@@ -19,10 +19,13 @@ import io.itch.mattekudasai.metallance.`object`.Bomb
 import io.itch.mattekudasai.metallance.`object`.Shot
 import io.itch.mattekudasai.metallance.player.Flagship
 import io.itch.mattekudasai.metallance.screen.game.CityEnvironmentRenderer
+import io.itch.mattekudasai.metallance.screen.game.CloudsEnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.EnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.NoopEnvironmentRenderer
 import io.itch.mattekudasai.metallance.screen.game.SimulationEnvironmentRenderer
+import io.itch.mattekudasai.metallance.screen.game.SpaceEnvironmentRenderer
 import io.itch.mattekudasai.metallance.stage.Level
+import io.itch.mattekudasai.metallance.util.collision.collides
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.disposing.mutableDisposableListOf
@@ -33,7 +36,6 @@ import io.itch.mattekudasai.metallance.util.drawing.withTransparency
 import io.itch.mattekudasai.metallance.util.files.overridable
 import io.itch.mattekudasai.metallance.util.pixel.intFloat
 import io.itch.mattekudasai.metallance.util.sound.playLow
-import io.itch.mattekudasai.metallance.util.sound.playSingleLow
 import ktx.app.KtxInputAdapter
 import ktx.app.KtxScreen
 import ktx.app.clearScreen
@@ -108,6 +110,7 @@ class GameScreen(
     private val enemyShotTextures = listOf(
         "texture/bullet/wave.png",
         "texture/bullet/invisible.png",
+        "texture/bullet/pixel.png",
     ).map {
         Texture(it.overridable).autoDisposing()
     }
@@ -134,6 +137,8 @@ class GameScreen(
     private var shieldSoundPlaying = -1L
     private var shouldPlayEnemyShot: Boolean = false
     private var boss: Enemy? = null
+    private val levelTintColor = Color.WHITE.cpy()
+    private val screamingTintColor = Color.WHITE.cpy()
 
     private val level = Level(
         scriptFile = configuration.levelPath.overridable,
@@ -143,6 +148,10 @@ class GameScreen(
                     ?: SimulationEnvironmentRenderer().autoDisposing()
 
                 "city" -> environmentRenderer as? CityEnvironmentRenderer ?: CityEnvironmentRenderer().autoDisposing()
+                "space" -> environmentRenderer as? SpaceEnvironmentRenderer
+                    ?: SpaceEnvironmentRenderer().autoDisposing()
+                "clouds" -> environmentRenderer as? CloudsEnvironmentRenderer
+                    ?: CloudsEnvironmentRenderer().autoDisposing()
 
                 else -> NoopEnvironmentRenderer
             }
@@ -175,13 +184,14 @@ class GameScreen(
                 initialPosition = initialPosition,
                 updatePositionDt = enemyConfiguration.updatePositionDt,
                 shot = {
-                    shouldPlayEnemyShot = true
+                    shouldPlayEnemyShot = enemyShotSoundCooldown < 0f
                     val shotTextureIndex = it.shootingPattern?.shotTextureIndex
                     val isCoveredWithBomb = shotTextureIndex?.let { it > 127 } ?: false
                     it.shootingPattern?.onShoot?.invoke(
                         it,
                         flagship.internalPosition,
-                        enemyShotTextures[if (isCoveredWithBomb) 1 else shotTextureIndex?.takeIf { it < enemyShotTextures.size } ?: 0]
+                        enemyShotTextures[if (isCoveredWithBomb) 1 else shotTextureIndex?.takeIf { it < enemyShotTextures.size }
+                            ?: 0]
                     )?.let {
                         enemyShots += it
                         if (isCoveredWithBomb) {
@@ -209,7 +219,21 @@ class GameScreen(
                 hitSound = enemyHitSound,
                 explodeSound = enemyExplodeSound,
                 isBoss = enemyConfiguration.isBoss,
-                isBaloon = enemyConfiguration.enemyType == 6 // 'G'
+                isBaloon = enemyConfiguration.enemyType == 6, // 'G'
+                screaming = { remainingFactor ->
+                    screamingTintColor.set(levelTintColor)
+                    if (remainingFactor > 0.5f) {
+                        stageSwipe = true
+                    } else if (remainingFactor > 0f) {
+                        stageSwipe = false
+                        screamingTintColor.r = levelTintColor.r + (1f - levelTintColor.r) * remainingFactor
+                        screamingTintColor.g = levelTintColor.g * (1f - remainingFactor)
+                        screamingTintColor.b = levelTintColor.b * (1f - remainingFactor)
+                    } else {
+                        screamingTintColor.set(levelTintColor)
+                    }
+                    setTint(screamingTintColor)
+                }
             ).also { enemy ->
                 enemyConfiguration.shootingPatternSubscription.subscribe(enemy) {
                     enemy.shootingPattern = it.toPattern(
@@ -232,7 +256,10 @@ class GameScreen(
             isGameEnding = true
         },
         setRenderMode = setRenderMode,
-        setTint = setTint,
+        setTint = {
+            levelTintColor.set(it)
+            setTint(levelTintColor)
+        },
         playMusic = { path, volume ->
             music?.stop()
             music = null
@@ -245,6 +272,9 @@ class GameScreen(
                     it.isLooping = true
                 }
             }
+        },
+        seekMusic = {
+            music?.position = it
         },
         fadeMusicOut = { forTime ->
             musicFadesInTotal = forTime
@@ -357,13 +387,31 @@ class GameScreen(
             get() = x > -10f && x < (viewport.worldWidth + 10f) && y > -10f && y < (viewport.worldHeight + 10f)*/
 
     private var totalGameTime = 0f
+    private var totalFrameCount = 0
+    private var previousSecondFps = 0
+    private var totalFrameCountLastSecond = 0
+    private var logFpsIn = 1f
 
     private var evenFrame = false
     private var enemyShotSoundCooldown = 0f
+    private var lastEnemyShotAt = 0f
+    private var stage = 1
+    private var stageSwipe = false
 
     override fun render(delta: Float) {
         evenFrame = !evenFrame
         totalGameTime += delta
+        if (Gdx.app.logLevel == Application.LOG_DEBUG && delta > 0f) {
+            totalFrameCount++
+            totalFrameCountLastSecond++
+            logFpsIn -= delta
+            if (logFpsIn < 0f) {
+                logFpsIn += 1f
+                Gdx.app.debug("fps", "$totalFrameCountLastSecond, avg: ${totalFrameCount / totalGameTime}")
+                previousSecondFps = totalFrameCountLastSecond
+                totalFrameCountLastSecond = 0
+            }
+        }
         enemyShotSoundCooldown -= delta
 
         clearScreen(red = 0f, green = 0f, blue = 0f)
@@ -371,6 +419,14 @@ class GameScreen(
         if (delta == 0f) {
             music?.pause()
         } else {
+            if (stageSwipe) {
+                stage++
+                if (stage == 4) stage = 1
+                setRenderMode(4, stage)
+            } else if (stage > 0) {
+                stage = 0
+                setRenderMode(4, stage)
+            }
             if (!isGameStarted) {
                 fadingFactor -= delta
                 if (fadingFactor < 0f) {
@@ -381,9 +437,11 @@ class GameScreen(
             if (flagship.isAlive) {
                 level.update(delta) // should be updated regardless of the game state
                 if (shouldPlayEnemyShot) {
+                    val fromLastShot = totalGameTime - lastEnemyShotAt
+                    lastEnemyShotAt = totalGameTime
                     shouldPlayEnemyShot = false
                     if (enemyShotSoundCooldown < 0f) {
-                        enemyShotSound.playLow(0.1f)
+                        enemyShotSound.playLow(0.05f + 0.05f * min(1f, fromLastShot * 2f))
                     }
                     enemyShotSoundCooldown = 0.05f
                 }
@@ -457,13 +515,16 @@ class GameScreen(
         }
 
         viewport.apply(true)
-        environmentRenderer.renderBackground(viewport, camera, totalGameTime, flagship.internalPosition)
+        environmentRenderer.renderBackground(viewport, camera, totalGameTime, flagship.internalPosition.takeIf { flagship.isAlive })
         bombs.forEach { if (it.isEnemy) it.draw(camera) }
         batch.use(camera) { batch ->
             powerUps.forEach { it.draw(batch) }
             energyPods.forEach { it.draw(batch) }
             shipUpgrades.forEach { it.draw(batch) }
             shieldUpgrades.forEach { it.draw(batch) }
+            if (!flagship.isInvincible || evenFrame) {
+                flagship.draw(batch)
+            }
             enemyShots.forEach { it.draw(batch) }
             enemies.forEach {
                 if (it.isAlive && (!it.isInvincible || !evenFrame)) {
@@ -497,9 +558,7 @@ class GameScreen(
             }
             shots.forEach { it.draw(batch) }
             //bombs.forEach { it.draw(batch) }
-            if (!flagship.isInvincible || evenFrame) {
-                flagship.draw(batch)
-            }
+
             delayedTextDrawer.updateAndDraw(delta, batch)
         }
         environmentRenderer.renderForeground(viewport, camera, totalGameTime, flagship.internalPosition)
@@ -523,39 +582,34 @@ class GameScreen(
                 it.rect(11f, 231f, boss.hitPoints * 234f / boss.initialHitPoints, 3f)
             }
         }
+
         batch.use(camera) {
             // lives
             textDrawer.drawText(
                 it,
-                listOf("Ж${if (configuration.easyMode) 99 else min(max(0, flagship.lives), 99)}"),
+                livesLeftText[if (configuration.easyMode || flagship.lives > 3) 4 else max(0, flagship.lives)],
                 58f,
                 -11f
             )
             // power
             it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
-            textDrawer.drawText(it, listOf("POWER"), 85f, -11f)
+            textDrawer.drawText(it, powerText, 85f, -11f)
             it.color = Color.WHITE
-            textDrawer.drawText(it, listOf("POWER"), 85f, -11f, characterLimit = flagship.power)
+            textDrawer.drawText(it, powerText, 85f, -11f, characterLimit = flagship.power)
+
 
             // ship type
-            textDrawer.drawText(
-                it, listOf(
-                    when (flagship.shipType) {
-                        0 -> "NORMAL"
-                        1 -> "DOUBLE"
-                        2 -> "TRIPLE"
-                        3 -> "QUADRU"
-                        4 -> "QUINTU"
-                        else -> "METAL"
-                    }
-                ), 124f, -11f
-            )
+            textDrawer.drawText(it, shipTypeText[flagship.shipType], 124f, -11f)
 
             // lance charge
             it.color = tempReusableColor.set(0.2f, 0.2f, 0.2f, 1f)
-            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f)
+            textDrawer.drawText(it, lanceText, 169f, -11f)
             it.color = Color.WHITE
-            textDrawer.drawText(it, listOf("LANCE"), 169f, -11f, characterLimit = flagship.charge)
+            textDrawer.drawText(it, lanceText, 169f, -11f, characterLimit = flagship.charge)
+
+            if (Gdx.app.logLevel == Application.LOG_DEBUG) {
+                textDrawer.drawText(it, listOf("$previousSecondFps"), 10f, 10f)
+            }
         }
 
         if (fadingFactor > 0f) {
@@ -579,7 +633,7 @@ class GameScreen(
             }
             if (enemy.isAlive && !enemy.isInvincible) {
                 // flagship collision check
-                val flagshipHit = !flagship.isInvincible && flagship.collides(enemy, 3f, 1.5f)
+                val flagshipHit = !flagship.isInvincible && flagship.isAlive && (collides(enemy.previousPosition, enemy.internalPosition, flagship.previousPosition, flagship.internalPosition, 1.5f) || flagship.collides(enemy, 3f, 1.5f))
                 if (flagshipHit) {
                     enemy.explodeAndSpawnReward(damage = if (flagship.isLancing) 3 else 1)
                     if (!enemy.isBaloon) {
@@ -618,7 +672,7 @@ class GameScreen(
                 }
             }
             // flagship collision check
-            val flagshipHit = !flagship.isInvincible && flagship.collides(enemyShot, 3f, 1.5f)
+            val flagshipHit = !flagship.isInvincible && flagship.isAlive && collides(enemyShot.previousPosition, enemyShot.internalPosition, flagship.previousPosition, flagship.internalPosition, 1.5f)
             if (flagshipHit) {
                 damageFlagship()
             }
@@ -640,7 +694,7 @@ class GameScreen(
             // collision check
             var removeShot = false
             for (enemy in enemies) {
-                if (enemy.isAlive && !enemy.isInvincible && shot.hits(enemy.internalPosition, enemy.width/2f)) {
+                if (enemy.isAlive && !enemy.isInvincible && shot.hits(enemy.internalPosition, enemy.width / 2f)) {
                     removeShot = true
                     enemy.explodeAndSpawnReward()
                     defeatToWin -= 1
@@ -683,9 +737,9 @@ class GameScreen(
 
     private fun createShield() {
         flagship.playPickupSound()
-       /* shieldSoundPlaying = shieldSound.play()
-        shieldSound.setVolume(shieldSoundPlaying, 0.05f)
-        shieldSound.setLooping(shieldSoundPlaying, true)*/
+        /* shieldSoundPlaying = shieldSound.play()
+         shieldSound.setVolume(shieldSoundPlaying, 0.05f)
+         shieldSound.setLooping(shieldSoundPlaying, true)*/
         Gdx.app.debug("sound", "started shield $shieldSoundPlaying")
         var looping = false
         bombs += Bomb(
@@ -838,5 +892,24 @@ class GameScreen(
     enum class EndAction {
         RETURN_TO_MENU,
         NEXT_LEVEL,
+    }
+
+    companion object {
+        private val lanceText = listOf("LANCE")
+        private val powerText = listOf("POWER")
+        private val livesLeftText = listOf(
+            "Ж0",
+            "Ж1",
+            "Ж2",
+            "Ж3",
+            "Ж99",
+        ).map { listOf(it) }
+        private val shipTypeText = listOf(
+            "NORMAL",
+            "DOUBLE",
+            "TRIPLE",
+            "QUADRU",
+            "QUINTU",
+        ).map { listOf(it) }
     }
 }

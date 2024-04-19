@@ -21,6 +21,7 @@ class Level(
     private val setRenderMode: (mode: Int, stage: Int) -> Unit,
     private val setTint: (tint: Color) -> Unit,
     private val playMusic: (assetPath: String, volume: Float) -> Unit,
+    private val seekMusic: (position: Float) -> Unit,
     private val fadeMusicOut: (forTime: Float) -> Unit,
     private val winningCondition: (condition: String, counter: Int) -> Unit,
     private val endSequence: () -> Unit,
@@ -81,6 +82,10 @@ class Level(
 
                     "fade" -> {
                         fadeMusicOut(split.getFloat(2))
+                    }
+
+                    "seek" -> {
+                        seekMusic(split.getFloat(2))
                     }
                 }
 
@@ -308,8 +313,8 @@ class Level(
             'B' -> 1 to 0f
             'C' -> 2 to 1f
             'D' -> 3 to 1f
-            'E' -> 30 to 0f // level 1 boss
-            'F' -> 50 to 0f // level 2 boss
+            'E' -> 30 to 0.05f // level 1 and 2 boss, some invincibility frames to save from lance-spamming
+            'F' -> 4 to 0f // spiraling
             'G' -> 1 to 0f // baloon
             else -> 1 to 0f
         }

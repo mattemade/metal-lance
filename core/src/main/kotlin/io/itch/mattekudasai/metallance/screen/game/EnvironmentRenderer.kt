@@ -6,6 +6,6 @@ import com.badlogic.gdx.utils.Disposable
 import com.badlogic.gdx.utils.viewport.Viewport
 
 interface EnvironmentRenderer: Disposable {
-    fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {}
-    fun renderForeground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2) {}
+    fun renderBackground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {}
+    fun renderForeground(viewport: Viewport, camera: Camera, time: Float, flagshipPosition: Vector2?) {}
 }

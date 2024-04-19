@@ -1,3 +1,4 @@
+setting  clouds
 tint  0.8  0.8  1.0
 music  play  music/stage2.ogg  0.1  112.49945
 wait  b3
@@ -6,7 +7,7 @@ wait  b1
 
 # part 1
 
-#goto  141
+#goto  151
 goto  36
 
 # slow intro
@@ -167,7 +168,7 @@ stage pall  \
 stage pall  \
     shoot B3ZRD  for 0  move 0.8907 0.5  after b4  shoot 0  (  \
     for 0  move 0.5 0.5  \
-    for b2  sin top 0 c1 100  cos right 0 c1 100  \
+    for b2  shoot B3ZRDFF  sin top 0 c1 100  cos right 0 c1 100  \
     after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p0.5 c1 100  cos right p0.5 c1 100  \
     after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1 c1 100  cos right p1 c1 100  \
     after b2  shoot F8DRL  after b1  shoot 0  after b1  for 0  move 0.5 0.5  after 0  for b2  sin top p1.5 c1 100  cos right p1.5 c1 100  \

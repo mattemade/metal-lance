@@ -1,8 +1,8 @@
-tint  1.0  1.0  0.9
+tint  1.0  9.0  0.8
 setting  city
 music  play  music/stage1.ogg  0.1  128.5714
 
-#goto  134
+#goto  140
 
 wait  b3
 text  STAGE 1\RUINED CITY  0.5  0.8
@@ -106,6 +106,7 @@ wait  b4
 wait  b4
 wait  b4
 wait  b4
+# circles
 spawn  b6  BBD  none  right  0.9166  for b4  move 0.5 0.9166  after b4  \
     for 0  move 0.5 0.5  for b6  sin left 0 b2 100  cos top 0 b2 100  after b6  \
     lin right 100

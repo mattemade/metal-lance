@@ -16,7 +16,7 @@ class Shot(
 
     val direction: Vector2 = initialDirection ?: Vector2()
     val internalPosition: Vector2 = initialPosition.cpy()
-    private val previousPosition = internalPosition.cpy()
+    val previousPosition = internalPosition.cpy()
     var internalTimer = 0f
         private set
 
@@ -34,8 +34,8 @@ class Shot(
     fun update(delta: Float) {
         internalTimer += delta
         directionDt?.let {
-            it.invoke(this, internalTimer, delta)
             previousPosition.set(internalPosition)
+            it.invoke(this, internalTimer, delta)
         }
         internalPosition.mulAdd(direction, delta)
 

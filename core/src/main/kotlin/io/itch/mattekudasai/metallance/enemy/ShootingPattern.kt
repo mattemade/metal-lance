@@ -19,7 +19,7 @@ class ShootingPattern(
 ) {
 
     companion object {
-        private const val MIN_DELAY = 0.1f
+        private const val MIN_DELAY = 0.01f
         private const val MAX_DELAY = 2f
         private const val MIN_ANGLE_SPEED = 0f
         private const val MAX_ANGLE_SPEED = 360f
@@ -49,8 +49,10 @@ class ShootingPattern(
                             'H' -> 1535000001000L // quick short spree forward
                             'J' -> 5555109990000L // ???
                             'K' -> 1015009119000L // quick long spree towards the player
+                            'L' -> 1502000009200L // slow lazer directed to movement
+                            'S' -> 1599000003200L // cloud of steam
                             //     cdpsggahhtiii
-                            'Z' -> 1535009001000L // quick short spree forward
+                            'Z' -> 1591000003200L // cloud of steam
                             else -> 0
                         }.reverse()
                 } else {
@@ -64,6 +66,10 @@ class ShootingPattern(
                             'R' -> result.replace(4) { 9 } // round
                             'Q' -> result.replace(5) { 5 } // queued group of half period
                             'T' -> result.replace(5) { 9 } // queued group during full period
+                            'H' -> {
+                                result = result.replace(7) { 1 }.reverse()
+                                result.replace(8) { 1 }
+                            } // homing initially
                             'L' -> result.replace(8) { max(0, this - 1) } // lesser homing period
                             'N' -> result.replace(9) { 9 } // neverending
                             'M' -> result.replace(9) { max(0, this - 1) } // mock, die faster
@@ -134,7 +140,7 @@ class ShootingPattern(
 
             val secondPerBeat = 60f / tempoProvider()
             val initialDelayFloat = secondPerBeat * 2.0.pow(initialDelay - 5.0).toFloat()
-            val periodFloat = secondPerBeat * 2.0.pow(period - 5.0).toFloat()
+            val periodFloat = if (period == 9L) 0.001f else secondPerBeat * 2.0.pow(period - 5.0).toFloat()
             val groupPeriodFloat = groupPeriod.inRange(10, 0f, periodFloat / countPerShot)
             val shotSpeedFloat = speed.inRange(10, MIN_SPEED, MAX_SPEED)
             val angleSpeedFloat = angleSpeed.inRange(10, MIN_ANGLE_SPEED, MAX_ANGLE_SPEED)

@@ -1,6 +1,6 @@
 setting  simulation
 tint  0.8  1.0  0.8
-music  play  music/tutorial.ogg  0.1f  123.9598
+music  play  music/tutorial.ogg  0.1  123.9598
 wait  b4
 text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
 wait  b8

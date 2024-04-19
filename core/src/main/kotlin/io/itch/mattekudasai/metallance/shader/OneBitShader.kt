@@ -1,6 +1,5 @@
 package io.itch.mattekudasai.metallance.shader
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.math.Vector2
@@ -26,9 +25,6 @@ object OneBitShader {
         time: Float? = null,
         tint: Color? = null,
     ) {
-        if (tint != null) {
-            Gdx.app.debug("tint.r", "${tint?.r}")
-        }
         use {
             renderColorMode?.let { setUniformi("renderColor", it) }
             stage?.let { setUniformi("stage", it) }
@@ -122,7 +118,18 @@ object OneBitShader {
             {
               vec4 color = texture2D(u_texture, v_texCoords);
               vec2 fragCoord = vec2(v_texCoords.x*resolution.x, v_texCoords.y*resolution.y);
-              float gray = (color.r + color.g + color.b) / 3.0;
+              float gray;
+              if (stage == 0) {
+                gray = (color.r + color.g + color.b) / 3.0;
+              } else if (stage == 1) {
+                gray = color.r;
+              } else if (stage == 2) {
+                gray = color.g;
+              } else if (stage == 3) {
+                gray = color.b;
+              } else if (stage == 4) {
+                gray = max(max(color.r, color.g), color.b);
+              }
               if (renderColor == 1) {
                 gl_FragColor = color;
                 return;
@@ -142,11 +149,11 @@ object OneBitShader {
                 gl_FragColor = vec4(bwColor, bwColor, bwColor, 1.0);
                 return;
               } else if (renderColor == 4) {
-                if (color.r == 0.0 && color.g == 0.0 && color.b == 0.0 || color.r == 1.0 && color.g == 1.0 && color.b == 1.0) {
+                if (color.r == 0.0 && color.g == 0.0 && color.b == 0.0) {
                   gl_FragColor = color * tint;
                 } else {
                   float result = rand(fragCoord) > (1.0 - gray*gray) ? 1.0 : 0.0;
-                  gl_FragColor = vec4(result, result, result, 1.0) * tint;
+                  gl_FragColor = vec4(stage == 0 || stage == 1 ? result : 0.0, stage == 0 || stage == 2 ? result : 0.0, stage == 0 || stage == 3 ? result : 0.0, 1.0) * tint;
                 }
                 return;
               }

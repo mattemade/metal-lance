@@ -23,11 +23,11 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
     private val viewport = FitViewport(0f, 0f, camera)
-    private val music: Music by remember { Gdx.audio.newMusic("music/intro.ogg".overridable) }
+    private val music: Music by remember { Gdx.audio.newMusic("music/outro.ogg".overridable) }
 
     private var textIndex = 0
     private var currentFrameIndex = 0
-    private var internalTimer = -0.5f // initial delay of 0.5 second
+    private var internalTimer = 0f
     private var currentPartIndex = 0
     private var opacity = 0f
     private var fadingOut = false
@@ -38,14 +38,13 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     init {
         music.play()
         music.volume = 0.1f
-        music.isLooping = true
     }
 
     override fun render(delta: Float) {
         clearScreen(red = 0f, green = 0f, blue = 0f)
         if (delta == 0f) {
             music.pause()
-        } else if (!music.isPlaying) {
+        } else if (!music.isPlaying && internalTimer < 25f) {
             music.play()
         }
 

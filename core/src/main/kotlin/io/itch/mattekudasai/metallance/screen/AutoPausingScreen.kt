@@ -1,5 +1,6 @@
 package io.itch.mattekudasai.metallance.screen
 
+import com.badlogic.gdx.Application
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.InputProcessor
@@ -49,6 +50,8 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
         Gdx.input.inputProcessor = this
     }
 
+    private var deltaMultiplier: Float = 1f
+
     override fun render(delta: Float) {
         if (isPaused) {
             screen.render(0f)
@@ -63,7 +66,11 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
                 textDrawer.drawText(it, pauseMessage, viewport.worldWidth/2f, viewport.worldWidth/2f, Align.top)
             }
         } else {
-            screen.render(delta)
+            if (Gdx.app.logLevel == Application.LOG_DEBUG) {
+                screen.render(delta * deltaMultiplier)
+            } else {
+                screen.render(delta)
+            }
         }
     }
 
@@ -94,6 +101,13 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
         if (keycode == Keys.P) {
             isPaused = !isPaused
             return true
+        }
+        if (Gdx.app.logLevel == Application.LOG_DEBUG) {
+            if (keycode == Keys.LEFT_BRACKET) {
+                deltaMultiplier /= 2f
+            } else if (keycode == Keys.RIGHT_BRACKET) {
+                deltaMultiplier *= 2f
+            }
         }
         return screen.keyDown(keycode)
     }

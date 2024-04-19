@@ -24,8 +24,11 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         if (false) {
             showGameScreen(
                 GameScreen.Configuration(
-                    levelPath = "levels/stage1.txt",
+                    levelPath = "levels/stage2.txt",
                     sequenceEndAction = GameScreen.EndAction.NEXT_LEVEL,
+                    power = 2,
+                    shipType = 1,
+                    charge = 3
                 )
             )
         } else {
@@ -34,7 +37,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showDisclaimer() {
-        switchToScreen(DisclaimerScreen( { showIntro() }, { getScreen<PixelPerfectScreen>().updateTint(it) }))
+        switchToScreen(DisclaimerScreen({ showIntro() }, { getScreen<PixelPerfectScreen>().updateTint(it) }))
     }
 
     private fun showIntro() {
@@ -42,23 +45,30 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showTitle() {
-        switchToScreen(TitleScreen(
-            startTutorial = {
-                showGameScreen(
-                    GameScreen.Configuration(
-                        levelPath = "levels/tutorial.txt",
-                        livesLeft = Int.MAX_VALUE
+        switchToScreen(
+            TitleScreen(
+                startTutorial = {
+                    showGameScreen(
+                        GameScreen.Configuration(
+                            levelPath = "levels/tutorial.txt",
+                            livesLeft = Int.MAX_VALUE
+                        )
                     )
-                )
-            },
-            startGame = {
-                showGameScreen(
-                    GameScreen.Configuration(
-                        levelPath = "levels/stage1.txt",
+                },
+                startGame = {
+                    showGameScreen(
+                        GameScreen.Configuration(
+                            levelPath = it ?: "levels/stage1.txt",
+                        )
                     )
-                )
-            }
-        ))
+                },
+                showDisclaimer = { showDisclaimer() },
+                showIntro = { showIntro() },
+                showGameOver = { showGameOver(GameScreen.Configuration("levels/stage1.txt", usedContinue = it)) },
+                showTurnOffEasyMode = { showTurnOffEasyMode(GameScreen.Configuration("levels/stage1.txt", usedContinue = true, easyMode = true))},
+                showOutro = { showOutro() },
+            )
+        )
     }
 
     private fun showGameScreen(configuration: GameScreen.Configuration) {
@@ -93,7 +103,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     private fun startNextLevel(it: GameScreen.Configuration) {
         when (it.levelPath) {
             "levels/stage1.txt" -> showGameScreen(it.copy(levelPath = "levels/stage2.txt"))
-            "levels/stage2.txt" -> showDisclaimer()//showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
+            "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
             "levels/stage3.txt" -> showOutro()
             "levels/tutorial.txt" -> showTitle()
         }
@@ -116,11 +126,13 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showTurnOffEasyMode(configuration: GameScreen.Configuration) {
-        switchToScreen(TurnOffEasyModeScreen(
-            apply = { easyMode ->
-                startNextLevel(configuration.copy(easyMode = easyMode))
-            },
-        ))
+        switchToScreen(
+            TurnOffEasyModeScreen(
+                apply = { easyMode ->
+                    startNextLevel(configuration.copy(easyMode = easyMode))
+                },
+            )
+        )
     }
 
     private fun showOutro() {

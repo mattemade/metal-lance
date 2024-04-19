@@ -22,6 +22,7 @@ class Enemy(
     private val explodeSound: Sound,
     val isBoss: Boolean,
     val isBaloon: Boolean,
+    private val screaming: (remainingFactor: Float) -> Unit
 ) : SimpleSprite(texture) {
 
     val internalPosition: Vector2 = initialPosition.cpy()
@@ -74,6 +75,7 @@ class Enemy(
             }
             if (scream > 0f) {
                 scream -= delta
+                screaming(max(0f, scream / SCREAM_TIME))
             } else if (stageResetsIn > 0f) {
                 stageResetsIn = max(0f, stageResetsIn - delta)
                 updatePositionDt.getOrNull(currentStage-1)?.invoke(this, previousStageTimer)
