@@ -17,26 +17,32 @@ class Enemy(
     private val invincibilityPeriod: Float = 0f,
     val onRemoved: (Enemy) -> Unit,
     private val onStageDefeat: (Int) -> Char?,
-    private val onDefeat: () -> Char?,
+    private val onDefeat: (Enemy) -> Char?,
     private val hitSound: Sound,
     private val explodeSound: Sound,
     val isBoss: Boolean,
     val isBaloon: Boolean,
-    private val screaming: (remainingFactor: Float) -> Unit
+    val isTopShell: Boolean = false,
+    val keepOffscreen: Boolean = false,
+    val isBottomShell: Boolean = false,
+    private val screaming: (remainingFactor: Float) -> Unit,
+    private val anchor: Triple<Enemy, Vector2, () -> Float>? = null,
 ) : SimpleSprite(texture) {
+
+    val isShell = isTopShell || isBottomShell
 
     val internalPosition: Vector2 = initialPosition.cpy()
     val previousPosition: Vector2 = internalPosition.cpy()
     var internalTimer = 0f
         private set
 
-    var offscreenTimeToDisappear = DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR
+    var offscreenTimeToDisappear = if (isShell || keepOffscreen) Float.MAX_VALUE else DEFAULT_OFFSCREEN_TIME_TO_DISAPPEAR
     var hitPoints = initialHitPoints
-        private set
+        //private set // making it public just for the 2nd phase of the last boss
     val isAlive
         get() = hitPoints > 0
 
-    private var timeToMortal = 0f
+    var timeToMortal = 0f // public set as a hack to allow the last piece of the final boss not to be killed by a random bullet before its shield is ready
     val isInvincible: Boolean
         get() = isAlive && (timeToMortal > 0f || scream > 0f || stageResetsIn > 0f)
 
@@ -55,12 +61,28 @@ class Enemy(
 
     private var shootingRepeater: DelayedRepeater? = null
 
-    private val stageSize = initialHitPoints / updatePositionDt.size // e.g. 5 for 2 stage with 10 hp
+    private val stageSize = if (updatePositionDt.isEmpty()) initialHitPoints else initialHitPoints / updatePositionDt.size // e.g. 5 for 2 stage with 10 hp
     private var scream = 0f
     private var stageResetsIn = 0f
     private var transitionVector = Vector2()
 
+    fun updateShootingOnly(delta: Float) {
+        previousPosition.set(internalPosition)
+        shootingRepeater?.update(delta)
+    }
+
     fun update(delta: Float) {
+        if (anchor != null) {
+            if (!isAlive) {
+                internalTimer -= delta
+            }
+            timeToMortal -= delta
+            previousPosition.set(internalPosition)
+            internalPosition.set(anchor.first.internalPosition).add(anchor.second).add(0f, anchor.third())
+            setPosition(internalPosition.x, internalPosition.y)
+            shootingRepeater?.update(delta)
+            return
+        }
         if (isAlive) {
             timeToMortal -= delta
             internalTimer += delta
@@ -97,13 +119,13 @@ class Enemy(
     val shouldBeRemoved: Boolean
         get() = !isAlive && internalTimer <= 0
 
-    fun hit(damage: Int = 1): Char? {
+    fun hit(damage: Int = 1, keepAlive: Boolean = false): Char? {
         if (lastHitSound > -1) {
             hitSound.stop(lastHitSound)
             lastHitSound = -1
         }
         hitPoints = max(0, hitPoints - damage)
-        if (isAlive) {
+        if (isAlive || keepAlive) {
             timeToMortal = invincibilityPeriod
             lastHitSound = hitSound.playSingleLow(lastHitSound, volume = 0.15f)
             val newStage = (initialHitPoints - hitPoints) / stageSize
@@ -115,7 +137,7 @@ class Enemy(
         explodeSound.playSingleLow(volume = 0.15f)
         internalTimer = 0.5f
         texture = explosionTexture
-        return onDefeat()
+        return onDefeat(this)
     }
 
     companion object {

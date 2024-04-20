@@ -258,9 +258,13 @@ class Flagship(
         timeToStartOver = 1f
     }
 
-    fun hit(): Boolean {
+    fun hit(force: Boolean = false): Boolean {
         if (state.wantToLance) {
-            return false
+            if (!force) {
+                return false
+            }
+            state.wantToLance = false
+            state.wantToLance = false // just in case of double press
         }
         if (!easyMode) {
             if (--lives < 0) {

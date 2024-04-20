@@ -1,0 +1,182 @@
+#goto  46
+tint  0.8  1.0  0.8
+setting  simulation
+music  play  music/tutorial.ogg  0.1  123.9598
+music  seek  b8
+
+wait  b3
+text  THANK YOU FOR PLAYING   0.5  0.8
+wait  b1
+
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  b2
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  b2
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  b2
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  b2
+spawn  0  AB  eeach  right  R0.1-0.7  lin left 40
+wait  b2
+wait  b2
+
+tint  1.0  9.0  0.8
+setting  city
+music  play  music/stage1.ogg  0.1  128.5714
+music  seek  b36
+
+spawn  0  CD  peach  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b3
+text  GAME BY MATTE   0.5  0.8
+wait  b1
+spawn  b6  BB BB BB  eall  right  0.4  lin left 40  sin bottom 0 1 40
+wait  b4
+wait  b4
+wait  b4
+spawn  b8  CD BB BB BB  sall  right  0.6 0.3  lin left 40  sin top 0 1 40
+wait  b4
+wait  b4
+spawn  0  BB BB  none  left  0.2 0.8  lin right 100
+wait  b4
+spawn  b0.6  BCF BCF BCF BCF BCF BCF BCF  none  top  0.11765 0.95  sin bottom 0 3 80  lin top 40
+wait  b2
+spawn  b0.6  BCF BCF BCF BCF BCF BCF BCF  none  bottom  0.0588 0.88235  sin top 0 3 80  lin bottom 40
+wait  b1
+
+setting  clouds
+tint  0.8  0.8  1.0
+music  play  music/stage2.ogg  0.1  112.49945
+music  seek  b63
+
+wait  b1
+spawn  0  D0  none  left  0.1  for b2  move 2 0.1
+spawn  0  D0  none  right  0.9  for b2  move -1 0.9
+wait  b2
+spawn  0  D0  none  top  0.1  for b2  move 0.1 -1
+spawn  0  D0  none  bottom  0.9  for b2  move 0.9 2
+wait  b1
+text  MUSIC AND SOUND\BY NICOLE   0.5  0.8
+wait  b1
+spawn  0  D0  Seach  left  0.4  for b1  move 0.1094 0.5  after b1  shoot B2ZR  after b1  shoot B3WFD  for 0  move 0.5 0.5  for b16  sin top 0 c1 100  cos left 0 c1 100  after b16  shoot B6XRFD  lin left 200
+spawn  0  D0  Seach  right  0.4  for b1  move 0.8907 0.5  after b1  shoot B2ZR  after b1  shoot B3WFD  for 0  move 0.5 0.5  for b16  sin bottom 0 c1 100  cos right 0 c1 100  after b16  shoot B6XRFD  lin right 200
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+spawn  b2  BBFDKKK CBFDKKK  eall  right  0.3  lin left 80  sin bottom 0 c1 20
+wait  b4
+spawn  b2  BBFDKKK CBFDKKK  pall  right  0.7  lin left 80  sin top 0 c1 20
+wait  b4
+
+setting  space
+tint  0.8  0.9  1.0
+music  play  music/stage3.ogg  0.1  92.9032
+music  seek  b80
+
+
+spawn  b3  CDF BBF BBF  pall  bottom  0.8907  for b2  move 0.8907 0.5  after b2  \
+    for 0  move 0.5 0.5  for b4  sin top 0 c1 100  cos right 0 c1 100  after b4  lin bottom 100
+spawn  b3  CDF BBF BBF  pall  top  0.8907  for b2  move 0.8907 0.5  after b2  \
+    for 0  move 0.5 0.5  for b4  sin bottom 0 c1 100  cos right 0 c1 100  after b4  lin top 100
+wait  b3
+text  MADE FOR 1 BIT JAM   0.5  0.8
+wait  b1
+wait  b4
+spawn  b3  CDF BBF BBF  pall  bottom  0.1094  for b2  move 0.1094 0.5  after b2  \
+    for 0  move 0.5 0.5  for b4  sin top p-1 c1 100  cos right p-1 c1 100  after b4  lin bottom 100
+spawn  b3  CDF BBF BBF  pall  top  0.1094  for b2  move 0.1094 0.5  after b2  \
+    for 0  move 0.5 0.5  for b4  sin bottom p-1 c1 100  cos right p-1 c1 100  after b4  lin top 100
+wait  b4
+wait  b4
+spawn  0  FLD  none  right  0.8  for b16  lin left 0.1  after b16  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.2  for b16  lin left 0.1  after b16  shoot 0  lin right 100
+spawn  b3  CDF BBF BBF  pall  left  0.9166  for b2  move 0.5 0.9166  after b2  \
+    for 0  move 0.5 0.5  for b4  sin right 0 c1 100  cos bottom 0 c1 100  after b4  lin left 100
+spawn  b3  CDF BBF BBF  pall  left  0.0833  for b2  move 0.5 0.0833  after b2  \
+    for 0  move 0.5 0.5  for b4  sin right 0 c1 100  cos top 0 c1 100  after b4  lin left 100
+wait  b4
+wait  b4
+spawn  0  FLD  none  right  0.7  for b8  lin left 0.1  after b8  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.3  for b8  lin left 0.1  after b8  shoot 0  lin right 100
+wait  b2
+spawn  0  FLD  none  right  0.6  for b6  lin left 0.1  after b6  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.4  for b6  lin left 0.1  after b6  shoot 0  lin right 100
+wait  b2
+spawn  0  FLD  none  top  0.8  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.2  for b4  lin top 0.1  after b4  shoot 0  lin bottom 100
+wait  b1
+spawn  0  FLD  none  top  0.3  for b3  lin bottom 0.1  after b3  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.7  for b3  lin top 0.1  after b3  shoot 0  lin bottom 100
+wait  b1
+spawn  0  FLD  none  top  0.6  for b2  lin bottom 0.1  after b2  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.4  for b2  lin top 0.1  after b2  shoot 0  lin bottom 100
+wait  b2
+
+end
+wait  b16
+
+
+wait b4
+text
+
+
+# stage 2
+
+
+
+
+# stage 3
+
+setting  space
+tint  0.8  0.9  1.0
+music  play  music/stage3.ogg  0.1  92.9032
+
+# slow intro
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# basic
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# leads
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# panning leads
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+
+wait  b4
+wait  b4
+wait  b4
+wait  b4
+
+# outro
+wait  b4
+wait  b4
+wait  b4
+wait  b4

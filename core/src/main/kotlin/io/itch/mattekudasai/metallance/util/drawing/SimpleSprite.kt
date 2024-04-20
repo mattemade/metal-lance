@@ -16,6 +16,13 @@ open class SimpleSprite(texture: Texture, private val shouldManagerTextureDispos
         }
     }
 
+    fun updateTexture(texture: Texture) {
+        this.texture = texture
+        val textureWidth = texture.width.toFloat()
+        val textureHeight = texture.height.toFloat()
+        setBounds(0f, 0f, textureWidth, textureHeight)
+    }
+
     override fun setPosition(x: Float, y: Float) {
         super.setPosition((x - width/2f).intFloat, (y - height/2f).intFloat)
     }

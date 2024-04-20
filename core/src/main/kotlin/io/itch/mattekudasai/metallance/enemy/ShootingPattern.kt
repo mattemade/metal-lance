@@ -40,17 +40,17 @@ class ShootingPattern(
                     result =
                         when (c) {
                             'A' -> 0 // does not shoot
-                            'B' -> 1472000119000L // slowly shoots towards the player
-                            'C' -> 1472000009000L // slowly shoots forward
-                            'D' -> 1154000119000L // faster shooting towards the player
-                            'E' -> 1152002119000L // slowly shooting towards the player, slow and short homing
-                            'F' -> 1153003939000L // faster shooting towards the player, slow starting better and longer homing
-                            'G' -> 1154003139000L // faster shooting towards the player, better and longer homing
-                            'H' -> 1535000001000L // quick short spree forward
-                            'J' -> 5555109990000L // ???
-                            'K' -> 1015009119000L // quick long spree towards the player
-                            'L' -> 1502000009200L // slow lazer directed to movement
-                            'S' -> 1599000003200L // cloud of steam
+                            'B' -> 1492000119000L // slowly shoots towards the player
+                            'C' -> 1492000009000L // slowly shoots forward
+                            'D' -> 1174000119000L // faster shooting towards the player
+                            'E' -> 1172002119000L // slowly shooting towards the player, slow and short homing
+                            'F' -> 1173003939000L // faster shooting towards the player, slow starting better and longer homing
+                            'G' -> 1174003139000L // faster shooting towards the player, better and longer homing
+                            'H' -> 1555000001000L // quick short spree forward
+                            'J' -> 5575109990000L // ???
+                            'K' -> 1035009119000L // quick long spree towards the player
+                            'L' -> 1509000003200L // slow lazer directed to movement
+                            'S' -> 1502000003300L // cloud of steam
                             //     cdpsggahhtiii
                             'Z' -> 1591000003200L // cloud of steam
                             else -> 0
@@ -60,6 +60,7 @@ class ShootingPattern(
                         when (c) {
                             in '2'..'9' -> result.replace(0) { c - '0' }
                             'F' -> result.replace(2) { max(0, this - 1) } // faster, shorter period
+                            'G' -> result.replace(2) { min(9, this + 1) } // grubby, longer period
                             'D' -> result.replace(1) { 0 } // don't wait before shooting
                             'S' -> result.replace(4) { 2 } // spread
                             'W' -> result.replace(4) { 5 } // widespread
@@ -74,6 +75,7 @@ class ShootingPattern(
                             'N' -> result.replace(9) { 9 } // neverending
                             'M' -> result.replace(9) { max(0, this - 1) } // mock, die faster
                             'K' -> result.replace(3) { min(9, this + 1) } // kuickier, moving faster
+                            'P' -> result.replace(3) { max(0, this - 1) } // putty, moving slower
                             'B' -> {
                                 result = result.replace(10) { 8 }.reverse()
                                 result = result.replace(11) { 2 }.reverse()
@@ -140,9 +142,9 @@ class ShootingPattern(
 
             val secondPerBeat = 60f / tempoProvider()
             val initialDelayFloat = secondPerBeat * 2.0.pow(initialDelay - 5.0).toFloat()
-            val periodFloat = if (period == 9L) 0.001f else secondPerBeat * 2.0.pow(period - 5.0).toFloat()
+            val periodFloat = /*if (period == 9L) 0.001f else*/ secondPerBeat * 2.0.pow(period - 7.0).toFloat()
             val groupPeriodFloat = groupPeriod.inRange(10, 0f, periodFloat / countPerShot)
-            val shotSpeedFloat = speed.inRange(10, MIN_SPEED, MAX_SPEED)
+            val shotSpeedFloat = if (speed == 9L) 400f else speed.inRange(10, MIN_SPEED, MAX_SPEED)
             val angleSpeedFloat = angleSpeed.inRange(10, MIN_ANGLE_SPEED, MAX_ANGLE_SPEED)
             val shootingInAngleRange = 360f * groupingRule / 9f
             val anglePerShot = shootingInAngleRange / (countPerShot)
@@ -208,7 +210,8 @@ class ShootingPattern(
                     isAvailableAt = { time ->
                         time > homingFromFloat && time <= homingToFloat
                     },
-                    timeToLive = timeToLiveFloat
+                    timeToLive = timeToLiveFloat,
+                    alpha = if (textureIndex == 3L) 0.5f else 1f,
                 )
             }
         }
@@ -224,7 +227,8 @@ class ShootingPattern(
                 )
             },
             isAvailableAt: (time: Float) -> Boolean = { false },
-            timeToLive: Float
+            timeToLive: Float,
+            alpha: Float = 1f,
         ) = listOf(
             Shot(
                 enemy.internalPosition.cpy(),
@@ -242,7 +246,9 @@ class ShootingPattern(
                 },
                 texture = texture,
                 timeToLive = timeToLive,
-            )
+            ).apply {
+                setAlpha(alpha)
+            }
         )
 
         private val tempPosition = Vector2()

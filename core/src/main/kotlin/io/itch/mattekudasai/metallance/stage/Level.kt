@@ -316,6 +316,7 @@ class Level(
             'E' -> 30 to 0.05f // level 1 and 2 boss, some invincibility frames to save from lance-spamming
             'F' -> 4 to 0f // spiraling
             'G' -> 1 to 0f // baloon
+            'H' -> 40 to 0f // baloon
             else -> 1 to 0f
         }
 

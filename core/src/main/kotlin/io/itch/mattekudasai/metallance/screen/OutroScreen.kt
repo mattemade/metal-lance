@@ -103,7 +103,7 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         if (isPaused || currentPartIndex > 0f) {
             return false
         }
-        if (keycode.isAnyKey) {
+        if (internalTimer > 1f && keycode.isAnyKey) {
             music.stop()
             finish()
         }

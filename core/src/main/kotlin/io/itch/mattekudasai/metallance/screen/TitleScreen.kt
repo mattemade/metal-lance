@@ -30,6 +30,7 @@ class TitleScreen(
     val showGameOver: (withEasyMode: Boolean) -> Unit,
     val showTurnOffEasyMode: () -> Unit,
     val showOutro: () -> Unit,
+    val showCredits: () -> Unit,
 ) : KtxScreen, KtxInputAdapter, Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
@@ -127,7 +128,7 @@ class TitleScreen(
             selection = (selection + 1) % menuItems.size
         }
         if (Gdx.app.logLevel == Application.LOG_DEBUG) {
-            if (keycode >= Keys.NUM_1 && keycode <= Keys.NUM_9) {
+            if (keycode >= Keys.NUM_0 && keycode <= Keys.NUM_9) {
                 music.stop()
             }
             when (keycode) {
@@ -140,6 +141,7 @@ class TitleScreen(
                 Keys.NUM_7 -> showGameOver(true)
                 Keys.NUM_8 -> showTurnOffEasyMode()
                 Keys.NUM_9 -> showOutro()
+                Keys.NUM_0 -> showCredits()
             }
         } else {
             if (keycode >= Keys.A && keycode <= Keys.Z) {

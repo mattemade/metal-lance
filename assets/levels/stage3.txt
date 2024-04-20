@@ -1,11 +1,12 @@
 setting  space
 tint  0.8  0.9  1.0
 music  play  music/stage3.ogg  0.1  92.9032
-#music  seek  b76
+#music  seek  b68
 wait  b3
 text  STAGE 3\OUTER SPACE  0.5  0.8
 wait  b1
-#goto  80
+#spawn  0  F0  none  right  0.5  for b2  move 0.5 0.5  after b2  shoot S5DRM
+#goto  178
 #goto  86
 
 # slow intro b32
@@ -15,16 +16,16 @@ wait  b4
 text
 wait  b4
 spawn  b8  BBFD BBFD BBFD BBFD  pall  right  0.3  sin bottom 0 1.7 20  lin left 80
-spawn  0  F0  Seach  right  0.5  for b1  move 0.5 0.5  after b1  shoot L2DR  sin top p-0.25 c1 1  cos right p-0.25 c1 1  after b8  lin left 80
+spawn  0  F0  Seach  right  0.5  for b1  move 0.5 0.5  after b1  shoot L2DRPP  sin top p-0.25 c1 1  cos right p-0.25 c1 1  after b8  lin left 80
 wait  b4
 
 wait  b4
-spawn  0  FSDKKKKK  none  right  0.5  for b4  lin left 0.1  after b4  shoot 0  lin right 100
+spawn  0  FLDKKKKK  none  right  0.5  for b4  lin left 0.1  after b4  shoot 0  lin right 100
 spawn  b4  BBFD BBFD  eall  right  0.7  sin top 0 1.7 20  lin left 80
 spawn  b4  BBFD BBFD  eall  right  0.3  sin bottom 0 1.7 20  lin left 80
 wait  b4
 wait  b4
-spawn  0  FSDKKKKK  none  top  0.5  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+spawn  0  FLDKKKKK  none  top  0.5  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
 spawn  b4  BBFD BBFD  eall  top  0.7  sin right 0 1.7 20  lin bottom 80
 spawn  b4  BBFD BBFD  eall  top  0.3  sin left 0 1.7 20  lin bottom 80
 wait  b4
@@ -37,13 +38,13 @@ wait  b4
 spawn  b4  BBFD BBFD BBFD BBFD  eall  right  0.5  sin top 0 1.7 20  lin left 80
 wait  b4
 spawn  b4  BBFD BBFD BBFD BBFD  eall  right  0.4  sin top 0 1.7 20  lin left 80
-spawn  0  FSDKKKKKKKK  none  right  0.7  for b1  lin left 0.1  after b1  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.7  for b1  lin left 0.1  after b1  shoot 0  lin right 100
 wait  b1
-spawn  0  FSDKKKKKKKK  none  right  0.6  for b1  lin left 0.1  after b1  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.6  for b1  lin left 0.1  after b1  shoot 0  lin right 100
 wait  b1
-spawn  0  FSDKKKKKKKK  none  right  0.5  for b1  lin left 0.1  after b1  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.5  for b1  lin left 0.1  after b1  shoot 0  lin right 100
 wait  b1
-spawn  0  FSDKKKKKKKK  none  right  0.4  for b1  lin left 0.1  after b1  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.4  for b1  lin left 0.1  after b1  shoot 0  lin right 100
 wait  b1
 
 # leads b32 (seek b44)
@@ -59,28 +60,28 @@ spawn  b3  CDF BBF BBF  pall  top  0.1094  for b2  move 0.1094 0.5  after b2  \
     for 0  move 0.5 0.5  for b4  sin bottom p-1 c1 100  cos right p-1 c1 100  after b4  lin top 100
 wait  b4
 wait  b4
-spawn  0  FSDKKKKKKKK  none  right  0.8  for b16  lin left 0.1  after b16  shoot 0  lin right 100
-spawn  0  FSDKKKKKKKK  none  right  0.2  for b16  lin left 0.1  after b16  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.8  for b16  lin left 0.1  after b16  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.2  for b16  lin left 0.1  after b16  shoot 0  lin right 100
 spawn  b3  CDF BBF BBF  pall  left  0.9166  for b2  move 0.5 0.9166  after b2  \
     for 0  move 0.5 0.5  for b4  sin right 0 c1 100  cos bottom 0 c1 100  after b4  lin left 100
 spawn  b3  CDF BBF BBF  pall  left  0.0833  for b2  move 0.5 0.0833  after b2  \
     for 0  move 0.5 0.5  for b4  sin right 0 c1 100  cos top 0 c1 100  after b4  lin left 100
 wait  b4
 wait  b4
-spawn  0  FSDKKKKKKKK  none  right  0.7  for b8  lin left 0.1  after b8  shoot 0  lin right 100
-spawn  0  FSDKKKKKKKK  none  right  0.3  for b8  lin left 0.1  after b8  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.7  for b8  lin left 0.1  after b8  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.3  for b8  lin left 0.1  after b8  shoot 0  lin right 100
 wait  b2
-spawn  0  FSDKKKKKKKK  none  right  0.6  for b6  lin left 0.1  after b6  shoot 0  lin right 100
-spawn  0  FSDKKKKKKKK  none  right  0.4  for b6  lin left 0.1  after b6  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.6  for b6  lin left 0.1  after b6  shoot 0  lin right 100
+spawn  0  FLD  none  right  0.4  for b6  lin left 0.1  after b6  shoot 0  lin right 100
 wait  b2
-spawn  0  FSDKKKKKKKK  none  top  0.8  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
-spawn  0  FSDKKKKKKKK  none  bottom  0.2  for b4  lin top 0.1  after b4  shoot 0  lin bottom 100
+spawn  0  FLD  none  top  0.8  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.2  for b4  lin top 0.1  after b4  shoot 0  lin bottom 100
 wait  b1
-spawn  0  FSDKKKKKKKK  none  top  0.3  for b3  lin bottom 0.1  after b3  shoot 0  lin top 100
-spawn  0  FSDKKKKKKKK  none  bottom  0.7  for b3  lin top 0.1  after b3  shoot 0  lin bottom 100
+spawn  0  FLD  none  top  0.3  for b3  lin bottom 0.1  after b3  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.7  for b3  lin top 0.1  after b3  shoot 0  lin bottom 100
 wait  b1
-spawn  0  FSDKKKKKKKK  none  top  0.6  for b2  lin bottom 0.1  after b2  shoot 0  lin top 100
-spawn  0  FSDKKKKKKKK  none  bottom  0.4  for b2  lin top 0.1  after b2  shoot 0  lin bottom 100
+spawn  0  FLD  none  top  0.6  for b2  lin bottom 0.1  after b2  shoot 0  lin top 100
+spawn  0  FLD  none  bottom  0.4  for b2  lin top 0.1  after b2  shoot 0  lin bottom 100
 wait  b2
 
 # panning leads b32 (72)
@@ -102,12 +103,12 @@ spawn  b2  BBFFD BBFFD BBFFD BBFFD  pall  right  0.7  sin top 0 1.7 20  lin left
 wait  b4
 wait  b4
 
+##### remove
+goto  174
+##### remove
 
 wait  b4
 wait  b4
-##### remove
-end
-##### remove
 wait  b4
 wait  b4
 
@@ -170,6 +171,21 @@ wait  b4
 wait  b4
 
 
+music  fade  b3
+wait  b4
+music  play  music/boss.ogg  0.1  101.9607
+wait  b4
+spawn  0  I0  none  right  0.5  boss  for b1  move 1.1 0.5  after b2  sin top 0 c2 100
+goto  278
+
+
+
+
+
+end
+#spawn  0  B0  none  right  0.5  boss  for 0  move 1 0.5  after b2  sin top 0 c2 80
+
+wait  b32
 
 # run boss
 text
@@ -198,6 +214,7 @@ stage pall  \
 )
 
 waitdefeated  b2
+
 # run mothership
 wait  b4
 spawn  0  BB  eeach  right  R0.1-0.9  lin left 80
@@ -256,5 +273,13 @@ spawn  0  F0  none  right  0.5  for b2  move 0.5 0.5  after b2  (  shoot S9DR  a
 spawn  0  F0  none  right  0.5  for b2  move 0.5 0.5  after b2  shoot S5DRM
 
 # laser lines
-spawn  0  FSDKKK  none  top  0.8  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
-spawn  0  FSDKKK  none  top  0.2  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+spawn  0  FLDKKK  none  top  0.8  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+spawn  0  FLDKKK  none  top  0.2  for b4  lin bottom 0.1  after b4  shoot 0  lin top 100
+
+
+
+
+wait  b64
+text  HOLD J OR X TO\USE THE LANCE  0.5  0.8
+wait  b16
+text

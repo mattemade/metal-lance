@@ -24,9 +24,9 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
         if (false) {
             showGameScreen(
                 GameScreen.Configuration(
-                    levelPath = "levels/stage2.txt",
+                    levelPath = "levels/stage3.txt",
                     sequenceEndAction = GameScreen.EndAction.NEXT_LEVEL,
-                    power = 2,
+                    power = 3,
                     shipType = 1,
                     charge = 3
                 )
@@ -67,6 +67,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                 showGameOver = { showGameOver(GameScreen.Configuration("levels/stage1.txt", usedContinue = it)) },
                 showTurnOffEasyMode = { showTurnOffEasyMode(GameScreen.Configuration("levels/stage1.txt", usedContinue = true, easyMode = true))},
                 showOutro = { showOutro() },
+                showCredits = { showCredits() }
             )
         )
     }
@@ -86,7 +87,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
                     showGameOver(it)
                 },
                 advance = {
-                    if (it.easyMode && it.levelPath != "levels/stage3.txt") {
+                    if (it.easyMode && it.levelPath != "levels/stage3.txt" && it.levelPath != "levels/credits.txt") {
                         showTurnOffEasyMode(it)
                     } else {
                         startNextLevel(it)
@@ -106,6 +107,7 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
             "levels/stage2.txt" -> showGameScreen(it.copy(levelPath = "levels/stage3.txt"))
             "levels/stage3.txt" -> showOutro()
             "levels/tutorial.txt" -> showTitle()
+            "levels/credits.txt" -> showTitle()
         }
     }
 
@@ -136,7 +138,11 @@ class MetalLanceGame : KtxGame<KtxScreen>() /* not self disposing since KtxGame 
     }
 
     private fun showOutro() {
-        switchToScreen(OutroScreen { showTitle() })
+        switchToScreen(OutroScreen { showCredits() })
+    }
+
+    private fun showCredits() {
+        showGameScreen(GameScreen.Configuration("levels/credits.txt", livesLeft = Int.MAX_VALUE, easyMode = true, power = 5, shipType = 4, charge = 5))
     }
 
     private fun <T> switchToScreen(screen: T) where T : KtxScreen, T : InputProcessor {
