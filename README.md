@@ -17,7 +17,6 @@ Tools used:
 
 * [libGDX](https://github.com/libgdx/libgdx) with [TeaVM](https://github.com/konsoletyper/teavm) for code
 * [GIMP](https://github.com/GNOME/gimp) for images
-* [LMMS](https://github.com/LMMS/lmms) for sound effects (not really since I didn't make any sound yet, remove?)
 
 Licenses:
 
@@ -37,9 +36,9 @@ Licenses:
 | Stage 2    | 100   | 50    | 100   | 100 | 0   |
 | Boss 2     | 100   | 50    | 100   | 100 | 0   |
 | Stage 3    | 100   | 0     | 100   | 100 | 0   |
-| Final boss | 100   | 0     | 100   | 100 | 0   |
+| Final boss | 100   | 0     | 100   | 100 | 20  |
 | Game over  | 100   | 0     | 100   | 0   | 0   |
-| Outro      | 100   | 0     | 0     | 0   | 10  |
+| Outro      | 100   | 0     | 100   | 0   | 10  |
 
 ## Dev log
 
@@ -61,7 +60,7 @@ Licenses:
 | 14  | 17/04/2024 | WED  | 1-2 | Level 1 boss                                                                               | 2    | Finished level 1 + a bunch of random stuff                                                                                                                                                                                                                                                                             |
 | 15  | 18/04/2024 | THU  | 3-4 | Level 2 + boss                                                                             | 4    | Drafted level 2 and outro + a lot of stuff                                                                                                                                                                                                                                                                             |
 | 16  | 19/04/2024 | FRI  | 6-8 | Finish level 2 + boss, finish level 3 + final boss, work out environment backgrounds       | 6    | Added lasers, half-done level 3, added some ideas for the final boss, added basic backgrounds for levels 2 and 3, refactored collision checks                                                                                                                                                                          |
-| 17  | 20/04/2024 | SAT  | 3-4 | Final touches, environment art, intro/outro art, submission at 16:00                       |      |                                                                                                                                                                                                                                                                                                                        |
+| 17  | 20/04/2024 | SAT  | 3-4 | Final touches, environment art, intro/outro art, submission at 16:00                       | 6    | Huge mess for the final boss                                                                                                                                                                                                                                                                                           |
 
 ## Behind the schedule
 
