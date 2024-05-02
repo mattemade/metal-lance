@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isAnyKey
+import io.itch.mattekudasai.metallance.screen.touch.TouchMenuAdapter
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
@@ -17,7 +18,8 @@ import ktx.graphics.use
 import kotlin.math.max
 import kotlin.math.min
 
-class DisclaimerScreen(val finish: () -> Unit, private val applyTint: (Color) -> Unit) : KtxScreen, KtxInputAdapter, Disposing by Self() {
+class DisclaimerScreen(val finish: () -> Unit, private val applyTint: (Color) -> Unit) : KtxScreen, KtxInputAdapter,
+    Disposing by Self() {
 
     private val batch: SpriteBatch by remember { SpriteBatch() }
     private val camera = OrthographicCamera()
@@ -59,6 +61,11 @@ class DisclaimerScreen(val finish: () -> Unit, private val applyTint: (Color) ->
     private var actionIndex = 0
     private var currentWaitTime = 0f
     private var ignoringInputFor = 1f
+    private val touchMenuAdapter = TouchMenuAdapter(
+        onDragDown = {},
+        onDragUp = {},
+        onTap = { finish() }
+    )
 
     init {
     }
@@ -115,6 +122,18 @@ class DisclaimerScreen(val finish: () -> Unit, private val applyTint: (Color) ->
     override fun resize(width: Int, height: Int) {
         viewport.setWorldSize(width.toFloat(), height.toFloat())
         viewport.setScreenSize(width, height)
+    }
+
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return touchMenuAdapter.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchUp(screenX, screenY, pointer, button)
     }
 
     override fun keyDown(keycode: Int): Boolean {

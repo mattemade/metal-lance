@@ -37,6 +37,12 @@ object OneBitShader {
 
     fun createOneBitShader(): ShaderProgram {
         val vertexShader = """
+            #ifdef GL_ES
+            #define LOWP highp
+            precision highp float;
+            #else
+            #define LOWP
+            #endif
             attribute vec4 ${ShaderProgram.POSITION_ATTRIBUTE};
             attribute vec4 ${ShaderProgram.COLOR_ATTRIBUTE};
             attribute vec2 ${ShaderProgram.TEXCOORD_ATTRIBUTE}0;
@@ -55,8 +61,8 @@ object OneBitShader {
             """.trimIndent()
         val fragmentShader = """
             #ifdef GL_ES
-            #define LOWP lowp
-            precision mediump float;
+            #define LOWP highp
+            precision highp float;
             #else
             #define LOWP
             #endif

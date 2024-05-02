@@ -1,8 +1,6 @@
 package io.itch.mattekudasai.metallance.screen
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input.Keys
-import com.badlogic.gdx.audio.Music
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
@@ -12,6 +10,7 @@ import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isDown
 import io.itch.mattekudasai.metallance.player.Controls.isShoot
 import io.itch.mattekudasai.metallance.player.Controls.isUp
+import io.itch.mattekudasai.metallance.screen.touch.TouchMenuAdapter
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
@@ -44,6 +43,11 @@ class TurnOffEasyModeScreen(
             fontHorizontalPadding = 1,
         )
     }
+    private val touchMenuAdapter = TouchMenuAdapter(
+        onDragUp = { if (selection > 0) moveCursorUp() },
+        onDragDown = { if (selection < menuItems.size - 1) moveCursorDown() },
+        onTap = { select() }
+    )
 
     override fun render(delta: Float) {
         internalTimer += delta
@@ -51,13 +55,25 @@ class TurnOffEasyModeScreen(
 
         viewport.apply(true)
         batch.use(camera) {
-            textDrawer.drawText(it, listOf("TURN OFF EASY MODE?"), viewport.worldWidth / 2f, viewport.worldHeight * 0.8f, Align.top)
+            textDrawer.drawText(
+                it,
+                listOf("TURN OFF EASY MODE?"),
+                viewport.worldWidth / 2f,
+                viewport.worldHeight * 0.8f,
+                Align.top
+            )
             val menuGoesFrom = viewport.worldHeight / 3f
             menuItems.forEachIndexed { index, item ->
                 val itemY = menuGoesFrom - index * 32f
-                textDrawer.drawText(it, listOf(item), viewport.worldWidth/2f, itemY, Align.top)
+                textDrawer.drawText(it, listOf(item), viewport.worldWidth / 2f, itemY, Align.top)
                 if (selection == index) {
-                    it.draw(shipTexture, viewport.worldWidth * 0.27f, itemY + 11f, shipTexture.width.toFloat(), shipTexture.height.toFloat())
+                    it.draw(
+                        shipTexture,
+                        viewport.worldWidth * 0.27f,
+                        itemY + 11f,
+                        shipTexture.width.toFloat(),
+                        shipTexture.height.toFloat()
+                    )
                 }
             }
 
@@ -70,21 +86,45 @@ class TurnOffEasyModeScreen(
         viewport.setScreenSize(width, height)
     }
 
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return touchMenuAdapter.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchUp(screenX, screenY, pointer, button)
+    }
+
     override fun keyDown(keycode: Int): Boolean {
         if (isPaused) {
             return false
         }
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
-            when (selection) {
-                0 -> apply(false)
-                1 -> apply(true)
-            }
+            select()
         } else if (keycode.isUp) {
-            selection = (selection + 1) % menuItems.size
+            moveCursorUp()
         } else if (keycode.isDown) {
-            selection = (selection + menuItems.size - 1) % menuItems.size
+            moveCursorDown()
         }
         return true
+    }
+
+    private fun select() {
+        when (selection) {
+            0 -> apply(false)
+            1 -> apply(true)
+        }
+    }
+
+    private fun moveCursorUp() {
+        selection = (selection + 1) % menuItems.size
+    }
+
+    private fun moveCursorDown() {
+        selection = (selection + menuItems.size - 1) % menuItems.size
     }
 
 }

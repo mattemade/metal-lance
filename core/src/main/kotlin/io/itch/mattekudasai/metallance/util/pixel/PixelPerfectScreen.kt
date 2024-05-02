@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.utils.viewport.FitViewport
 import com.badlogic.gdx.utils.viewport.Viewport
+import io.itch.mattekudasai.metallance.GlobalState
 import io.itch.mattekudasai.metallance.shader.OneBitShader
 import io.itch.mattekudasai.metallance.shader.OneBitShader.update
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
@@ -21,7 +22,11 @@ import ktx.graphics.use
 import kotlin.math.min
 
 // TODO: think over these val width/height, they may need to become vars at some point with widescreen upgrade
-class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth: Float, private val virtualHeight: Float) : KtxScreen, Disposing by Self() {
+class PixelPerfectScreen(
+    private val screen: KtxScreen,
+    private val virtualWidth: Float,
+    private val virtualHeight: Float
+) : KtxScreen, Disposing by Self() {
 
     private val origShaderProgram: ShaderProgram by remember { OneBitShader.createOneBitShader() }
     private val origSpriteBatch: SpriteBatch by remember { SpriteBatch(1000, origShaderProgram) }
@@ -102,6 +107,7 @@ class PixelPerfectScreen(private val screen: KtxScreen, private val virtualWidth
             scaleFactor = minFits.toFloat(),
             resolution = Vector2(viewportScreenWidth.toFloat(), viewportScreenHeight.toFloat())
         )
+        GlobalState.scaleFactor = minFits.toFloat()
 
         // TODO: maybe call that in create() only once? but maybe not, since virtual size may change later
         screen.resize(virtualWidth.toInt(), virtualHeight.toInt())

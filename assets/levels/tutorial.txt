@@ -4,7 +4,7 @@ music  play  music/tutorial.ogg  0.1  123.9598
 wait  b4
 text  TESTING ALL SYSTEMS\IN SIMULATION  0.5  0.8
 wait  b8
-text  MOVE WITH WASD\OR ARROWS  0.5  0.8
+text  MOVE WITH WASD, ARROWS\OR DRAG FINGER  0.5  0.8
 wait  b8
 text  HOLD SHIFT WHILE MOVING\TO SLOW DOWN  0.5  0.8
 wait  b8
@@ -17,7 +17,7 @@ spawn  0  A0  eeach  right  0.9  for b4  move 0.7 0.6
 waitdefeated  1
 text  PICK UP ENERGY PODS\TO CHARGE THE LANCE  0.5  0.8
 wait  b8
-text  HOLD J OR X TO PERFORM\THE LANCE STRIKE  0.5  0.8
+text  HOLD J, X OR TWO FINGERS TO\PERFORM THE LANCE STRIKE  0.5  0.8
 wait  b8
 text  PEIRCE THROUGH ENEMIES  0.5  0.8
 spawn  3  A0 A0 A0 A0 A0  eeach  right  0.5  lin left 40

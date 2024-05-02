@@ -63,7 +63,7 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
                 }
             }
             spriteBatch.use(camera) {
-                textDrawer.drawText(it, pauseMessage, viewport.worldWidth/2f, viewport.worldWidth/2f, Align.top)
+                textDrawer.drawText(it, pauseMessage, viewport.worldWidth / 2f, viewport.worldWidth / 2f, Align.top)
             }
         } else {
             if (Gdx.app.logLevel == Application.LOG_DEBUG) {
@@ -117,7 +117,17 @@ class AutoPausingScreen<T>(private val screen: T) : KtxScreen, Disposing by Self
     }
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
-        isPaused = false
-        return true
+        if (isPaused) {
+            isPaused = false
+        }
+        return screen.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return screen.touchUp(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return screen.touchDragged(screenX, screenY, pointer)
     }
 }

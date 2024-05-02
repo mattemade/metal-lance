@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isAnyKey
+import io.itch.mattekudasai.metallance.screen.touch.TouchMenuAdapter
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.DelayedTextDrawer
@@ -64,14 +65,18 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
             fadeOutFor = FADE_TIME * 2f
         }, // wait
         1f to {
-            music.stop()
-            finish()
+            skip()
         }
     )
     private var textIndex = 0
     private var actionIndex = 0
     private var currentWaitTime = 0f
     private val transparentColor = Color.CLEAR.cpy()
+    private val touchMenuAdapter = TouchMenuAdapter(
+        onDragUp = { },
+        onDragDown = { },
+        onTap = { skip() }
+    )
 
     override fun render(delta: Float) {
         clearScreen(red = 0f, green = 0f, blue = 0f)
@@ -133,15 +138,31 @@ class IntroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         viewport.setScreenSize(width, height)
     }
 
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return touchMenuAdapter.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchUp(screenX, screenY, pointer, button)
+    }
+
     override fun keyDown(keycode: Int): Boolean {
         if (isPaused) {
             return false
         }
         if (keycode.isAnyKey) {
-            music.stop()
-            finish()
+            skip()
         }
         return true
+    }
+
+    private fun skip() {
+        music.stop()
+        finish()
     }
 
     companion object {

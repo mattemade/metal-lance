@@ -12,6 +12,7 @@ import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isDown
 import io.itch.mattekudasai.metallance.player.Controls.isShoot
 import io.itch.mattekudasai.metallance.player.Controls.isUp
+import io.itch.mattekudasai.metallance.screen.touch.TouchMenuAdapter
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.drawing.MonoSpaceTextDrawer
@@ -36,6 +37,11 @@ class GameOverScreen(
     private var internalTimer = 0f
     private var selection = if (showEasyMode) 1 else 0
     private val menuItems = listOf("EASY MODE".takeIf { showEasyMode }, "CONTINUE", "MAIN MENU").filterNotNull()
+    private val touchMenuAdapter = TouchMenuAdapter(
+        onDragUp = { if (selection > 0) moveCursorUp() },
+        onDragDown = { if (selection < menuItems.size - 1) moveCursorDown() },
+        onTap = { select() }
+    )
 
     private val textDrawer: MonoSpaceTextDrawer by remember {
         MonoSpaceTextDrawer(
@@ -53,6 +59,7 @@ class GameOverScreen(
         music.play()
         music.volume = 0.1f
     }
+
     override fun render(delta: Float) {
         internalTimer += delta
         clearScreen(red = 0f, green = 0f, blue = 0f)
@@ -69,13 +76,25 @@ class GameOverScreen(
 
         viewport.apply(true)
         batch.use(camera) {
-            textDrawer.drawText(it, listOf("GAME OVER"), viewport.worldWidth / 2f, viewport.worldHeight * 0.8f, Align.top)
+            textDrawer.drawText(
+                it,
+                listOf("GAME OVER"),
+                viewport.worldWidth / 2f,
+                viewport.worldHeight * 0.8f,
+                Align.top
+            )
             val menuGoesFrom = viewport.worldHeight / 3f
             menuItems.forEachIndexed { index, item ->
                 val itemY = menuGoesFrom - index * 32f
-                textDrawer.drawText(it, listOf(item), viewport.worldWidth/2f, itemY, Align.top)
+                textDrawer.drawText(it, listOf(item), viewport.worldWidth / 2f, itemY, Align.top)
                 if (selection == index) {
-                    it.draw(shipTexture, viewport.worldWidth * 0.27f, itemY + 11f, shipTexture.width.toFloat(), shipTexture.height.toFloat())
+                    it.draw(
+                        shipTexture,
+                        viewport.worldWidth * 0.27f,
+                        itemY + 11f,
+                        shipTexture.width.toFloat(),
+                        shipTexture.height.toFloat()
+                    )
                 }
             }
 
@@ -88,23 +107,47 @@ class GameOverScreen(
         viewport.setScreenSize(width, height)
     }
 
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return touchMenuAdapter.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchUp(screenX, screenY, pointer, button)
+    }
+
     override fun keyDown(keycode: Int): Boolean {
         if (isPaused) {
             return false
         }
         if (keycode.isShoot || keycode == Keys.SPACE || keycode == Keys.ENTER) {
-            music.stop()
-            when (selection) {
-                0 -> continueGame(showEasyMode)
-                1 -> if (showEasyMode) continueGame(false) else showTitle()
-                2 ->  showTitle()
-            }
+            select()
         } else if (keycode.isUp) {
-            selection = (selection + menuItems.size - 1) % menuItems.size
+            moveCursorUp()
         } else if (keycode.isDown) {
-            selection = (selection + 1) % menuItems.size
+            moveCursorDown()
         }
         return true
+    }
+
+    private fun select() {
+        music.stop()
+        when (selection) {
+            0 -> continueGame(showEasyMode)
+            1 -> if (showEasyMode) continueGame(false) else showTitle()
+            2 -> showTitle()
+        }
+    }
+
+    private fun moveCursorUp() {
+        selection = (selection + menuItems.size - 1) % menuItems.size
+    }
+
+    private fun moveCursorDown() {
+        selection = (selection + 1) % menuItems.size
     }
 
 }

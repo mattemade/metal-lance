@@ -411,7 +411,14 @@ class GameScreen(
         }
     }
 
-    private fun spawnFinalBossCannon(finalBoss: Enemy, textureId: Int, health: Int, offset: Vector2, reward: Char, shootingPattern: String) {
+    private fun spawnFinalBossCannon(
+        finalBoss: Enemy,
+        textureId: Int,
+        health: Int,
+        offset: Vector2,
+        reward: Char,
+        shootingPattern: String
+    ) {
         enemies += Enemy(
             enemyTextures[textureId],
             explosionTexture,
@@ -753,7 +760,8 @@ class GameScreen(
                 } else if (finalBossOpening == 0f) {
                     openingWaits = 2f
                     if (!openingGoesUp) {
-                        boss?.shootingPattern = "S9DRM".toPatternInt().toPattern(viewport.worldWidth, { level.musicTempo })
+                        boss?.shootingPattern =
+                            "S9DRM".toPatternInt().toPattern(viewport.worldWidth, { level.musicTempo })
                         openingGoesUp = true
                     }
                 }
@@ -1020,24 +1028,27 @@ class GameScreen(
     private fun Flagship.collides(enemy: Enemy, rearDistance: Float, frontDistance: Float): Boolean {
 
         val threshold = if (enemy.isShell) enemy.height / 2f else enemy.width / 2f
-/*        if (enemy.isTopShell || enemy.isBottomShell) {
-            val halfHeight = enemy.height / 2f
-            tempVector.set(enemy.x + threshold, enemy.y + if (enemy.isBottomShell) enemy.height else 0f)
-            Gdx.app.debug("hit", "${flagship.internalPosition} with $tempVector")
-            return flagship.isAlive && (tempVector.dst(rearPosition) < rearDistance + halfHeight ||
-                tempVector.dst(frontPosition) < frontDistance + halfHeight
-                )
-        }*/
+        /*        if (enemy.isTopShell || enemy.isBottomShell) {
+                    val halfHeight = enemy.height / 2f
+                    tempVector.set(enemy.x + threshold, enemy.y + if (enemy.isBottomShell) enemy.height else 0f)
+                    Gdx.app.debug("hit", "${flagship.internalPosition} with $tempVector")
+                    return flagship.isAlive && (tempVector.dst(rearPosition) < rearDistance + halfHeight ||
+                        tempVector.dst(frontPosition) < frontDistance + halfHeight
+                        )
+                }*/
         return (flagship.isAlive && (
             enemy.internalPosition.dst(rearPosition) < rearDistance + threshold ||
                 enemy.internalPosition.dst(frontPosition) < frontDistance + threshold
             )).also {
-                if (it) {
-                    Gdx.app.debug("hit", "flagship at ${flagship.internalPosition} hits with ${enemy.internalPosition} by $threshold")
-                    Gdx.app.debug("hit", "distance is ${flagship.internalPosition.dst(enemy.initialPosition)}")
-                    val a = 0
-                    val b = a + 1
-                }
+            if (it) {
+                Gdx.app.debug(
+                    "hit",
+                    "flagship at ${flagship.internalPosition} hits with ${enemy.internalPosition} by $threshold"
+                )
+                Gdx.app.debug("hit", "distance is ${flagship.internalPosition.dst(enemy.initialPosition)}")
+                val a = 0
+                val b = a + 1
+            }
         }
     }
 
@@ -1071,6 +1082,18 @@ class GameScreen(
 
     override fun keyUp(keycode: Int): Boolean {
         return flagship.keyUp(keycode)
+    }
+
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return flagship.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return flagship.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return flagship.touchUp(screenX, screenY, pointer, button)
     }
 
     data class Configuration(

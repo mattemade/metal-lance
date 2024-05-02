@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.viewport.FitViewport
 import io.itch.mattekudasai.metallance.GlobalState.isPaused
 import io.itch.mattekudasai.metallance.player.Controls.isAnyKey
+import io.itch.mattekudasai.metallance.screen.touch.TouchMenuAdapter
 import io.itch.mattekudasai.metallance.util.disposing.Disposing
 import io.itch.mattekudasai.metallance.util.disposing.Self
 import io.itch.mattekudasai.metallance.util.files.overridable
@@ -34,6 +35,12 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
     private var fadingIn = false
     private val images = (1..5).map { Texture("texture/outro/outro$it.png").autoDisposing() }
     private val tempColor = Color.WHITE.cpy()
+
+    private val touchMenuAdapter = TouchMenuAdapter(
+        onDragUp = { },
+        onDragDown = { },
+        onTap = { skip() }
+    )
 
     init {
         music.play()
@@ -99,15 +106,31 @@ class OutroScreen(val finish: () -> Unit) : KtxScreen, KtxInputAdapter, Disposin
         viewport.setScreenSize(width, height)
     }
 
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchDown(screenX, screenY, pointer, button)
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        return touchMenuAdapter.touchDragged(screenX, screenY, pointer)
+    }
+
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return touchMenuAdapter.touchUp(screenX, screenY, pointer, button)
+    }
+
     override fun keyDown(keycode: Int): Boolean {
         if (isPaused || currentPartIndex > 0f) {
             return false
         }
         if (internalTimer > 1f && keycode.isAnyKey) {
-            music.stop()
-            finish()
+            skip()
         }
         return true
+    }
+
+    private fun skip() {
+        music.stop()
+        finish()
     }
 
     companion object {

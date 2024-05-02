@@ -6,6 +6,7 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.math.Vector2
+import io.itch.mattekudasai.metallance.GlobalState
 import io.itch.mattekudasai.metallance.`object`.Shot
 import io.itch.mattekudasai.metallance.player.Controls.isBackward
 import io.itch.mattekudasai.metallance.player.Controls.isDown
@@ -18,9 +19,12 @@ import io.itch.mattekudasai.metallance.util.drawing.SimpleSprite
 import io.itch.mattekudasai.metallance.util.files.overridable
 import io.itch.mattekudasai.metallance.util.sound.playSingleLow
 import ktx.app.KtxInputAdapter
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sin
 
 // TODO: think about dynamic world width/height
 class Flagship(
@@ -122,6 +126,38 @@ class Flagship(
         return true
     }
 
+    private val movementStartedAt = Vector2()
+    private val movementEndingAt = Vector2()
+    private val tempVector = Vector2()
+
+    override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        if (pointer == 0) {
+            movementStartedAt.set(screenX.toFloat() / GlobalState.scaleFactor, -screenY.toFloat() / GlobalState.scaleFactor)
+            movementEndingAt.set(movementStartedAt)
+            state.shooting = true
+        } else if (pointer == 1) {
+            state.wantToLance = true
+        }
+        return true
+    }
+    override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        if (pointer == 0) {
+            movementEndingAt.set(movementStartedAt)
+            state.shooting = false
+        } else if (pointer == 1) {
+            state.wantToLance = false
+        }
+        return true
+    }
+
+    override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
+        if (pointer == 0) {
+            movementEndingAt.set(screenX.toFloat() / GlobalState.scaleFactor, -screenY.toFloat() / GlobalState.scaleFactor)
+        }
+        return true
+    }
+
+
 
     private val movingTo = Vector2()
     private var timeToStartOver = 0f
@@ -161,6 +197,25 @@ class Flagship(
                 wasLancing = true
             }
             movingTo.set(delta * LANCING_SPEED, 0f)
+        } else if (movementEndingAt.x != movementStartedAt.x) { // touch controls
+            if (wasLancing) {
+                spawnLanceBomb()
+                state.endLancingPosition.set(internalPosition)
+                wasLancing = false
+            }
+
+            tempVector.set(movementEndingAt).sub(movementStartedAt).len()
+            val horizontalSpeedLimit = HORIZONTAL_SPEED * cos(tempVector.angleRad())
+            val verticalSpeedLimit = VERTICAL_SPEED * sin(tempVector.angleRad())
+            if (abs(tempVector.x) > abs(horizontalSpeedLimit * delta)) {
+                tempVector.x = horizontalSpeedLimit
+            }
+            if (abs(tempVector.y) > abs(verticalSpeedLimit * delta)) {
+                tempVector.y = verticalSpeedLimit
+            }
+            tempVector.scl(delta)
+            movingTo.set(tempVector)
+            movementStartedAt.add(tempVector)
         } else {
             if (wasLancing) {
                 spawnLanceBomb()
