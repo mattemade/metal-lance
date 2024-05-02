@@ -41,7 +41,7 @@ class TouchMenuAdapter(
         if (pointer == 0) {
             lastTouchDown.sub(screenX.toFloat(), screenY.toFloat())
             lastTouchTime = System.currentTimeMillis() - lastTouchTime
-            if (lastTouchDown.len() < 100f / GlobalState.scaleFactor && lastTouchTime < 100f) {
+            if (lastTouchDown.len() < 100f / GlobalState.scaleFactor) {
                 onTap()
             }
         }
