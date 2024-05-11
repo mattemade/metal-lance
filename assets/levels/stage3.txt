@@ -280,6 +280,6 @@ spawn  0  FLDKKK  none  top  0.2  for b4  lin bottom 0.1  after b4  shoot 0  lin
 
 
 wait  b64
-text  HOLD J OR X TO\USE THE LANCE  0.5  0.8
+text  HOLD J, X OR TWO FINGERS\TO USE THE LANCE STRIKE  0.5  0.8
 wait  b16
 text
