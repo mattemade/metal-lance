@@ -21,7 +21,8 @@ Tools used:
 Licenses:
 
 * all the code is covered by GPL-3.0 license (see [LICENSE-CODE](LICENSE-CODE))
-* all non-code assets, such as visual and audio resources, are covered by CC-BY-4.0 license (
+* music is covered by CC BY-SA 4.0 (see [LICENSE-MUSIC](LICENSE-MUSIC))
+* all non-code assets, such as visual resources, are covered by CC-BY-4.0 license (
   see [LICENSE-ASSETS](LICENSE-CODE))
 
 ## Section-based progress
